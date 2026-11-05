@@ -1,0 +1,6 @@
+{
+  "name": "MAIMI GEO ATLAS — Rock & Mineral Identifier",
+  "description": "سامانه هوشمند شناسایی تصویری ۵۱ گروه سنگ، کانی و جواهرات با موتور بینایی Gemini و کاتالوگ جامع زمین‌شناسی",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

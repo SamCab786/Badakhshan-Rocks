@@ -1,0 +1,3452 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAIMI GEO ATLAS — سامانه مستقل شناسایی تصویری ۵۱ گروه سنگ و کانی</title>
+  <meta name="description" content="سامانه شناسایی هوشمند ۵۱ گروه سنگ، کانی و جواهرات بدخشان و جهان با تحلیل RGB توصیفی و Transformers.js">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #070a13;
+      --card-bg: #0f172a;
+      --card-border: #1e293b;
+      --card-hover: #1e293b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent-gold: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-main: 'Vazirmatn', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 4rem;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    /* Header */
+    header {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 0.75rem 1rem;
+    }
+    .header-content {
+      max-width: 1040px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #1d4ed8, #d97706);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+      flex-shrink: 0;
+    }
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #60a5fa, #fbbf24);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .model-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      flex-shrink: 0;
+    }
+    .status-dot.loading {
+      background: var(--accent-gold);
+      animation: pulse 1.2s infinite;
+    }
+    .status-dot.purple {
+      background: var(--accent-purple);
+    }
+    .status-dot.gray {
+      background: var(--text-dim);
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(1.3); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed #334155;
+      border-radius: 16px;
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      background: rgba(15, 23, 42, 0.6);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--primary);
+      background: rgba(37, 99, 235, 0.06);
+    }
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+    }
+    .upload-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 0.4rem;
+      color: #fff;
+    }
+    .upload-desc {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    .btn {
+      padding: 0.65rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-secondary {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
+    }
+
+    /* Engine Selector Box */
+    .engine-panel {
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .engine-info {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+    }
+    .engine-title {
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+    .engine-desc {
+      color: #94a3b8;
+      font-size: 0.74rem;
+    }
+
+    /* Model Progress Bar */
+    .model-progress-container {
+      display: none;
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+      text-align: right;
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #8b5cf6, #10b981);
+      transition: width 0.2s ease;
+    }
+
+    /* Specimen Quick Samples Strip */
+    .sample-strip-wrapper {
+      margin-top: 1.25rem;
+    }
+    .sample-strip-title {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    .sample-strip {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding: 0.25rem 0 0.5rem 0;
+      scrollbar-width: thin;
+      scrollbar-color: #334155 transparent;
+    }
+    .sample-pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .sample-pill:hover {
+      border-color: #60a5fa;
+      background: #253348;
+      color: #fff;
+    }
+
+    /* Results Section */
+    #results-section {
+      display: none;
+    }
+    .primary-candidate {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 58, 138, 0.25));
+      border: 2px solid #2563eb;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 12px 32px rgba(37, 99, 235, 0.2);
+    }
+    .candidate-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .rock-title {
+      font-size: 1.75rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.3;
+    }
+    .rock-subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      font-style: italic;
+      margin-top: 0.2rem;
+    }
+    .match-score-badge {
+      text-align: center;
+      background: #090e1a;
+      border: 2px solid #f59e0b;
+      border-radius: 14px;
+      padding: 0.75rem 1.25rem;
+      min-width: 150px;
+    }
+    .match-percent {
+      font-size: 2.2rem;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      color: #fbbf24;
+      line-height: 1;
+    }
+    .match-label {
+      font-size: 0.74rem;
+      color: #10b981;
+      font-weight: 700;
+      margin-top: 0.35rem;
+    }
+    .match-engine-chip {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      margin-top: 0.25rem;
+      display: block;
+    }
+
+    /* Section Separation Banner */
+    .demarcation-header {
+      font-size: 0.85rem;
+      font-weight: 800;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      margin: 1.25rem 0 0.75rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header-vision {
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      color: #93c5fd;
+    }
+    .header-database {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #a7f3d0;
+    }
+
+    /* Vision Feature Pills */
+    .vision-features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+    .vision-feature-card {
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 0.7rem 0.85rem;
+      font-size: 0.8rem;
+    }
+    .vision-feature-label {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-bottom: 0.2rem;
+      display: block;
+    }
+    .vision-feature-val {
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Properties Grid */
+    .prop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .prop-box {
+      background: rgba(9, 14, 26, 0.85);
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 0.75rem;
+    }
+    .prop-label {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+    .prop-val {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .prop-formula {
+      font-family: var(--font-mono);
+      color: #fbbf24;
+      word-break: break-all;
+      direction: ltr;
+      display: inline-block;
+      text-align: right;
+    }
+    .streak-chip {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 0.4rem;
+      border: 1px solid #475569;
+    }
+
+    /* Locality & Field Test Callouts */
+    .info-callout {
+      background: rgba(30, 58, 138, 0.2);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.83rem;
+      line-height: 1.6;
+    }
+    .info-callout strong {
+      color: #93c5fd;
+    }
+    .field-test-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      margin-top: 0.35rem;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+    }
+
+    /* Ranked Alternatives */
+    .alternatives-list {
+      margin-top: 1.5rem;
+    }
+    .alt-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      transition: background 0.15s ease;
+    }
+    .alt-item:hover {
+      background: #1e293b;
+    }
+    .alt-item-rank {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #1e293b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #94a3b8;
+      margin-left: 0.6rem;
+      flex-shrink: 0;
+    }
+    .alt-score {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: #cbd5e1;
+      direction: ltr;
+    }
+
+    /* Scientific Disclaimer */
+    .disclaimer-box {
+      background: rgba(180, 83, 9, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #fef3c7;
+      line-height: 1.7;
+    }
+    .disclaimer-title {
+      font-weight: 800;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.35rem;
+    }
+
+    /* History Drawer */
+    .history-card {
+      margin-top: 2rem;
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-items {
+      margin-top: 1rem;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .history-entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      padding: 0.65rem 0.9rem;
+      border-radius: 8px;
+      margin-bottom: 0.45rem;
+      font-size: 0.82rem;
+    }
+
+    /* Modal for 51 Catalog */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .modal-header {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 1.2rem 1.5rem;
+      overflow-y: auto;
+    }
+    .catalog-search-input {
+      width: 100%;
+      background: #090e1a;
+      border: 1px solid #334155;
+      padding: 0.65rem 1rem;
+      border-radius: 8px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .catalog-search-input:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 0.75rem;
+    }
+    .catalog-card-item {
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .catalog-card-item:hover {
+      border-color: #3b82f6;
+      background: #131d33;
+    }
+
+    /* Hidden elements */
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .card { padding: 1rem; }
+      .rock-title { font-size: 1.35rem; }
+      .match-score-badge { width: 100%; }
+      .candidate-header { flex-direction: column; align-items: flex-start; }
+      .header-content { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="brand">
+        <div class="brand-icon">💎</div>
+        <div>
+          <div class="brand-title">MAIMI GEO ATLAS</div>
+          <div class="brand-sub">سامانه مستقل شناسایی تصویری ۵۱ گروه سنگ، کانی و جواهرات</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-open-catalog">
+          📖 مشاهده دیتابیس ۵۱ مدخل مرجع
+        </button>
+        <div class="model-badge">
+          <span class="status-dot" id="model-dot"></span>
+          <span id="model-status-text">مدل CLIP (نیازمند دانلود اولیه)</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Primary Upload Section (Direct & Simple) -->
+    <div class="card" id="upload-card">
+      <div class="upload-zone" id="drop-zone">
+        <span class="upload-icon">🪨</span>
+        <h2 class="upload-title">تصویر سنگ یا کانی را اینجا قرار دهید یا انتخاب کنید</h2>
+        <p class="upload-desc">
+          یک عکس واضح از سنگ وارد کنید. مدل تصویری CLIP آن را با ۵۱ برچسب مرجع مقایسه و نامزدهای احتمالی را مرتب می‌کند. این آزمایش کیمیاوی یا منرالوژی نیست.
+        </p>
+        
+        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp">
+        <input type="file" id="camera-input" accept="image/*" capture="environment">
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btn-select-file">
+            📁 انتخاب عکس سنگ
+          </button>
+          <button class="btn btn-secondary" id="btn-camera">
+            📷 عکاسی با کمره
+          </button>
+        </div>
+
+        <!-- Specimen Image Preview inside dropzone -->
+        <div id="preview-wrapper" style="display: none; margin-top: 1.25rem;">
+          <img id="image-preview" style="max-height: 240px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 8px 24px rgba(0,0,0,0.6);" alt="نمونه سنگ">
+          <div style="margin-top: 0.75rem;">
+            <button class="btn btn-secondary btn-sm" id="btn-change-image">
+              🔄 تغییر عکس
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Reference Test Rocks Strip -->
+      <div class="sample-strip-wrapper">
+        <span class="sample-strip-title">
+          نمونه‌های نمایشی کاتالوگ (تصاویر مصنوعی؛ این بخش آزمایش شناسایی هوش مصنوعی نیست):
+        </span>
+        <div class="sample-strip">
+          <div class="sample-pill" data-id="lapis-lazuli">🔵 لاجورد سرسنگ بدخشان</div>
+          <div class="sample-pill" data-id="emerald">🟢 زمرد پنجشیر</div>
+          <div class="sample-pill" data-id="spinel">🔴 لعل بدخشان (اسپینل)</div>
+          <div class="sample-pill" data-id="pyrite">🟡 پیریت مکعبی (طلای ابلهان)</div>
+          <div class="sample-pill" data-id="malachite">🌿 مالاکیت نواری</div>
+          <div class="sample-pill" data-id="native-gold">🪙 طلای طبیعی در کوارتز</div>
+          <div class="sample-pill" data-id="quartz">⚪ کوارتز بلورین شفاف</div>
+          <div class="sample-pill" data-id="obsidian">🖤 ابسیدین شیشه آتشفشانی</div>
+          <div class="sample-pill" data-id="granite">🪨 گرانیت پامیر</div>
+        </div>
+      </div>
+
+      <!-- Engine Selector Box -->
+      <div class="engine-panel">
+        <div class="engine-info">
+          <span style="font-size: 1.2rem;">⚙️</span>
+          <div>
+            <div class="engine-title" id="active-engine-title">CLIP — در انتظار بارگذاری مدل تصویری</div>
+            <div class="engine-desc" id="active-engine-desc">مقایسهٔ خودکار تصویر تنها بعد از بارگذاری کامل مدل CLIP انجام می‌شود؛ رنگ RGB به‌تنهایی معیار تشخیص نیست.</div>
+          </div>
+        </div>
+        <div>
+          <button class="btn btn-secondary btn-sm" id="btn-load-clip">
+            🚀 بارگذاری مدل یادگیری عمیق Transformers.js CLIP
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress status for CLIP model download -->
+      <div class="model-progress-container" id="model-progress-box">
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+          <span id="progress-status-text">در حال بارگیری وزن‌های مدل CLIP از مخزن Hugging Face...</span>
+          <span id="progress-percent" style="font-family: var(--font-mono); font-weight: 700;">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+        <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 0.25rem;" id="progress-detail-text">
+          مدل در اولین اجرا نیاز به دانلود دارد. اگر دانلود ممکن نباشد، نتیجهٔ تشخیصی نشان داده نمی‌شود.
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Section (Visible after image analysis) -->
+    <div id="results-section">
+      
+      <!-- Primary Spotlight -->
+      <div class="primary-candidate">
+        <div class="candidate-header">
+          <div>
+            <span id="res-category" style="font-size: 0.75rem; background: #1e3a8a; border: 1px solid #3b82f6; padding: 0.2rem 0.65rem; border-radius: 9999px; color: #bfdbfe; font-weight: 700;">
+              سنگ قیمتی
+            </span>
+            <h1 class="rock-title" id="res-name-fa">لاجورد بدخشان (لاپی لزولی)</h1>
+            <div class="rock-subtitle" id="res-name-en">Badakhshan Lapis Lazuli</div>
+          </div>
+
+          <div class="match-score-badge">
+            <div class="match-percent" id="res-score">بدون فیصدی</div>
+            <div class="match-label" id="res-confidence">نتیجهٔ مقدماتی</div>
+            <span class="match-engine-chip" id="res-engine-tag">مقایسه رنگ پیکسل</span>
+          </div>
+        </div>
+
+        <!-- Demarcation 1: Directly Extracted Features from Image -->
+        <div class="demarcation-header header-vision">
+          <span>👁️</span>
+          <span>ویژگی‌های استخراج‌شده مستقیماً از تصویر (Image-Extracted Features)</span>
+        </div>
+        <div class="vision-features-grid">
+          <div class="vision-feature-card">
+            <span class="vision-feature-label">طیف رنگی غالب تصویر</span>
+            <div class="vision-feature-val">
+              <span id="feat-color-chip" style="width: 14px; height: 14px; border-radius: 4px; display: inline-block; background: #2563eb; border: 1px solid #475569;"></span>
+              <span id="feat-color-text">آبی تیره لاجوردی (#2563eb)</span>
+            </div>
+          </div>
+          <div class="vision-feature-card">
+            <span class="vision-feature-label">ذرات متالیک بازتابی / پیریت</span>
+            <div class="vision-feature-val" id="feat-gold-specks">
+              مثبت (مشاهده دانه‌های طلایی برنجی)
+            </div>
+          </div>
+          <div class="vision-feature-card">
+            <span class="vision-feature-label">رگه‌بندی و ناهمگنی ماتریس</span>
+            <div class="vision-feature-val" id="feat-veining">
+              مشاهده رگه‌های سفید کلسیت
+            </div>
+          </div>
+          <div class="vision-feature-card">
+            <span class="vision-feature-label">روشنایی و کنتراست میانگین</span>
+            <div class="vision-feature-val" id="feat-brightness">
+              روشنایی: ۳۸٪ • کنتراست: متوسط
+            </div>
+          </div>
+        </div>
+
+        <!-- Demarcation 2: Database-Retrieved Specifications (51 Catalog) -->
+        <div class="demarcation-header header-database">
+          <span>📚</span>
+          <span>مشخصات کانی‌شناسی بازیابی‌شده از کاتالوگ ۵۱ مرجع (Database Specifications)</span>
+        </div>
+
+        <!-- Properties Grid -->
+        <div class="prop-grid">
+          <div class="prop-box">
+            <span class="prop-label">فرمول کیمیاوی / ترکیب</span>
+            <span class="prop-val prop-formula" id="res-formula">(Na,Ca)₈[(SO₄,S,Cl)₂|(AlSiO₄)₆]</span>
+          </div>
+
+          <div class="prop-box">
+            <span class="prop-label">سختی موهس (Mohs)</span>
+            <span class="prop-val" id="res-mohs">۵.۰ - ۵.۵</span>
+          </div>
+
+          <div class="prop-box">
+            <span class="prop-label">چگالی / وزن مخصوص</span>
+            <span class="prop-val" id="res-sg">۲.۷۰ - ۲.۹۰ g/cm³</span>
+          </div>
+
+          <div class="prop-box">
+            <span class="prop-label">سیستم بلوری</span>
+            <span class="prop-val" id="res-crystal">ایزومتریک</span>
+          </div>
+
+          <div class="prop-box">
+            <span class="prop-label">رخ و شکستگی</span>
+            <span class="prop-val" id="res-cleavage">رخ ناقص • صدفی ناهموار</span>
+          </div>
+
+          <div class="prop-box">
+            <span class="prop-label">جلا (مقدار مرجع)</span>
+            <span class="prop-val" id="res-luster">—</span>
+          </div>
+          <div class="prop-box">
+            <span class="prop-label">آزمایش تفکیکی بعدی</span>
+            <span class="prop-val" id="res-next-test">—</span>
+          </div>
+          <div class="prop-box">
+            <span class="prop-label">رنگ خاکه (روی چینی بی‌لعاب)</span>
+            <span class="prop-val">
+              <span class="streak-chip" id="res-streak-chip" style="background-color: #60a5fa;"></span>
+              <span id="res-streak">آبی لاجوردی روشن</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Locality and Inclusions -->
+        <div class="info-callout">
+          <strong>🏔️ خاستگاه و معدن در افغانستان و جهان:</strong>
+          <span id="res-locality">معدن سرسنگ ولسوالی کران و منجان بدخشان با پیشینه استخراج مداوم بیش از ۷,۰۰۰ سال؛ منبع لاجورد فراعنه مصر باستان.</span>
+        </div>
+
+        <div class="info-callout" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3);">
+          <strong>🔬 ویژگی‌های تشخیصی مرجع برای نامزد انتخاب‌شده (نه مشاهدات قطعی عکس):</strong>
+          <span id="res-diagnostic">رنگ آبی فراطبیعی ماورای لاجوردی حاصل از گوگرد، همراه رگه‌های طلایی پیریت و بخش‌های سفید کلسیت.</span>
+        </div>
+
+        <div class="info-callout" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.25);">
+          <strong>📷 تفسیر نامزد برای همین تصویر (رتبه‌بندی مدل، نه مشاهدهٔ آزمایشگاهی):</strong>
+          <span id="res-interpretation">—</span>
+        </div>
+
+        <!-- Diagnostic Field Tests -->
+        <div class="info-callout" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3);">
+          <strong>🛠️ آزمایش‌های تأییدی میدانی (Field Tests):</strong>
+          <div id="res-field-tests">
+            <!-- populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Action: Scan another rock -->
+        <div style="margin-top: 1.5rem; text-align: center;">
+          <button class="btn btn-primary" id="btn-reset-scan">
+            🔄 تشخیص یک سنگ دیگر
+          </button>
+        </div>
+      </div>
+
+      <!-- Ranked Alternatives 2 to 5 -->
+      <div class="card alternatives-list">
+        <h3 style="font-size: 1rem; font-weight: 800; margin-bottom: 0.75rem; color: #94a3b8;">
+          دیگر نامزدهای رتبه‌بندی‌شدهٔ همین تصویر — روی هر گزینه کلیک کنید تا تمام گزارش آن نمایش داده شود:
+        </h3>
+        <div id="alternatives-container">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+      <!-- Scientific Disclaimer -->
+      <div class="disclaimer-box">
+        <div class="disclaimer-title">
+          <span>⚠️</span>
+          <span>اعتبارسنجی علمی و حدود صلاحیت هوش مصنوعی:</span>
+        </div>
+        این فهرست فقط رتبه‌بندی احتمالی مدل عمومی CLIP میان نام‌های موجود در کاتالوگ است؛ امتیاز شباهت آن احتمال کالیبره‌شده یا دقت علمی نیست. رنگ و روشنایی از همین تصویر محاسبه می‌شوند، اما فرمول، سختی، وزن مخصوص، رخ، خاکه و منشأ از معلومات مرجع نامزد انتخابی می‌آیند و روی نمونه اندازه‌گیری نشده‌اند. برای قطعیت، روش آزمایش متناسب با مورد لازم است (مانند سختی، وزن مخصوص، مقطع نازک، Raman یا XRD).
+      </div>
+
+    </div>
+
+    <!-- Scan History (Background storage) -->
+    <div class="card history-card">
+      <div class="history-header">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #94a3b8;">
+          📜 سوابق تشخیص‌های ذخیره‌شده (<span id="history-count">۰</span>)
+        </span>
+        <button class="btn btn-secondary btn-sm" id="btn-clear-history">
+          پاک‌کردن سوابق
+        </button>
+      </div>
+      <div class="history-items" id="history-list">
+        <div style="color: #64748b; font-size: 0.78rem; text-align: center; padding: 1rem;">
+          هنوز سابقه تشخیصی در این مرورگر ثبت نشده است.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal for 51 Catalog View -->
+  <div class="modal-overlay" id="catalog-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="font-size: 1.15rem; font-weight: 800; color: #fff;">
+          📚 پایگاه جامع ۵۱ مدخل کاتالوگ سنگ و کانی‌های مرجع
+        </h2>
+        <button class="btn btn-secondary btn-sm" id="btn-close-modal">✖ بستن</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" class="catalog-search-input" id="catalog-search" placeholder="جستجو بر اساس نام فارسی، انگلیسی، فرمول یا معدن (مثال: لاجورد، پنجشیر، SiO2)...">
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.75rem;" id="catalog-count-badge">
+          نمایش ۵۱ از ۵۱ مدخل زمین‌شناسی
+        </div>
+        <div class="catalog-grid" id="catalog-grid-container">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded Complete 51 Geological Catalog -->
+  <script>
+    window.GEOLOGY_CATALOG = [
+  {
+    "id": "lapis-lazuli",
+    "name_fa": "لاجورد بدخشان (لاپی لزولی)",
+    "name_en": "Badakhshan Lapis Lazuli",
+    "category": "gemstone",
+    "category_fa": "سنگ زینتی چندمنرالی (دگرگونی)",
+    "category_en": "Ornamental Metamorphic Rock (Aggregate)",
+    "formula": "سنگ مرکب؛ فرمول واحد ندارد (فازهای آبی ± کلسیت ± پیریت)",
+    "mohs_min": 5,
+    "mohs_max": 6,
+    "mohs_display": "تقریباً 5 تا 6؛ متغیر",
+    "sg_min": 2.5,
+    "sg_max": 3,
+    "sg_display": "تقریباً 2.50 تا 3.00؛ متغیر",
+    "crystal_system": "قابل تطبیق نیست؛ سنگ چندمنرالی",
+    "cleavage": "ضعیف یا نامشخص",
+    "fracture": "صدفی تا ناهموار",
+    "luster": "کدر، شیشه‌ای تا چرب",
+    "streak": "وابسته به منرال تشکیل‌دهنده؛ مقدار واحد ندارد",
+    "streak_hex": "#d1d5db",
+    "color_swatches": [
+      "#1e3a8a",
+      "#2563eb",
+      "#eab308",
+      "#f8fafc"
+    ],
+    "diagnostic": "سنگ آبی چندمنرالی؛ بخش‌های برنجی ممکن است پیریت و سفید ممکن است کلسیت باشند، ولی شناسایی قطعی فازها از تصویر ممکن نیست.",
+    "locality": "معدن باستانی سرسنگ در ولسوالی کران و منجان بدخشان با پیشینه استخراج مداوم بیش از ۷,۰۰۰ سال؛ منبع لاجورد فراعنه مصر و تمدن‌های بین‌النهرین.",
+    "field_tests": [
+      "سختی مرجع سنگ مرکب حدود ۵ تا ۶ است؛ روی نگین پرداخت‌شده آزمایش خراش نکنید",
+      "با لوپ جزء آبی، سفید و فلزی را بررسی کنید؛ این مشاهده هویت فاز را ثابت نمی‌کند",
+      "از اسید روی سنگ پرداخت‌شده استفاده نکنید؛ برای فازشناسی Raman یا XRD نیاز است"
+    ],
+    "primary_colors": [
+      "آبی سیر لاجوردی",
+      "رگه‌های طلایی پیریت",
+      "لکه‌های سفید کلسیت"
+    ]
+  },
+  {
+    "id": "emerald",
+    "name_fa": "زمرد پنجشیر",
+    "name_en": "Panjshir Emerald",
+    "category": "gemstone",
+    "category_fa": "سنگ قیمتی (گونه بریل)",
+    "category_en": "Precious Gemstone (Beryl)",
+    "formula": "Be₃Al₂(SiO₃)₆:Cr,V",
+    "mohs_min": 7.5,
+    "mohs_max": 8,
+    "mohs_display": "7.5 - 8.0",
+    "sg_min": 2.67,
+    "sg_max": 2.78,
+    "sg_display": "2.67 - 2.78",
+    "crystal_system": "هگزاگونال (بلورهای شش‌گوش منشوری)",
+    "cleavage": "ناقص (موازی با قاعده {0001})",
+    "fracture": "صدفی تا شکننده",
+    "luster": "شیشه‌ای درخشان",
+    "streak": "سفید بی‌رنگ",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#047857",
+      "#10b981",
+      "#34d399",
+      "#064e3b"
+    ],
+    "diagnostic": "بلورهای هگزاگونال منشوری با انکلوزیون‌های سه فازی (مایع، گاز، نمک)، شفافیت بالا و درخشش سبز زنده کرومدار.",
+    "locality": "معادن دره پنجشیر (خنچ، بوزمال، پیر یخ) با کیفیتی رقابت‌کننده با کلمبیا؛ از دیدگاه شفافیت و رنگ در رده بالاترین زمردهای جهان است.",
+    "field_tests": [
+      "سختی: کوارتز (۷) روی آن خراش نمی‌اندازد؛ شیشه و فولاد را به‌راحتی خراش می‌دهد",
+      "فیلتر چلسی: زیر فیلتر سنگ‌شناسی به دلیل حضور کروم سرخ یا صورتی جلوه می‌کند",
+      "انکلوزیون: وجود فازهای میکروسکوپی مایع-گاز شاخصه طبیعی بودن است"
+    ],
+    "primary_colors": [
+      "سبز چمنی تیره",
+      "سبز نعنایی شفاف",
+      "سبز زمرّدی شدید"
+    ]
+  },
+  {
+    "id": "spinel",
+    "name_fa": "لعل بدخشان (اسپینل سرخ)",
+    "name_en": "Badakhshan Spinel (Balas Ruby)",
+    "category": "gemstone",
+    "category_fa": "سنگ قیمتی",
+    "category_en": "Precious Gemstone",
+    "formula": "MgAl₂O₄",
+    "mohs_min": 7.5,
+    "mohs_max": 8,
+    "mohs_display": "7.5 - 8.0",
+    "sg_min": 3.58,
+    "sg_max": 3.61,
+    "sg_display": "3.58 - 3.61",
+    "crystal_system": "ایزومتریک (هشت‌وجهی اکتاهدرال)",
+    "cleavage": "ناقص",
+    "fracture": "صدفی",
+    "luster": "شیشه‌ای بسیار شفاف",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#991b1b",
+      "#e11d48",
+      "#f43f5e",
+      "#831843"
+    ],
+    "diagnostic": "بلورهای بی‌نقص هشت‌وجهی، بدون دوشکستگی نوری (ایزوتروپیک)، درخشش بالا بدون رخ مشخص.",
+    "locality": "معدن افسانه‌ای کوه لعل در ولسوالی اشکاشم و شغنان بدخشان؛ خاستگاه سنگ لعل شاهزاده سیاه در تاج سلطنتی بریتانیا و تخت طاووس.",
+    "field_tests": [
+      "سختی ۸: به راحتی کوارتز و توپاز نرم را خراش می‌دهد",
+      "پولاریسکوپ: در تمام جهات تاریک می‌ماند (تک‌شکستی است بر خلاف یاقوت سرخ)"
+    ],
+    "primary_colors": [
+      "قرمز خونی",
+      "صورتی لعل",
+      "ارغوانی شاهانه"
+    ]
+  },
+  {
+    "id": "tourmaline",
+    "name_fa": "تورمالین (الباایت و روبلیت)",
+    "name_en": "Tourmaline (Elbaite / Rubellite)",
+    "category": "gemstone",
+    "category_fa": "سنگ قیمتی و نیمه‌قیمتی",
+    "category_en": "Gemstone & Metamorphic Mineral",
+    "formula": "(Na,Ca)(Li,Mg,Al)₃(Al,Fe,Mn)₆(BO₃)₃(Si₆O₁₈)(OH)₄",
+    "mohs_min": 7,
+    "mohs_max": 7.5,
+    "mohs_display": "7.0 - 7.5",
+    "sg_min": 3,
+    "sg_max": 3.25,
+    "sg_display": "3.00 - 3.25",
+    "crystal_system": "تری‌گونال (منشورهای مثلثی مخطط)",
+    "cleavage": "نامشخص",
+    "fracture": "صدفی تا ناهموار",
+    "luster": "شیشه‌ای تا صمغی",
+    "streak": "سفید بی‌رنگ",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#db2777",
+      "#059669",
+      "#15803d",
+      "#be185d"
+    ],
+    "diagnostic": "مقطع عرضی مثلثی با اضلاع محدب، خطوط شیاری موازی طولی در وجوه منشور، پیروالکتریسیته شدید (جذب گرد و غبار با حرارت).",
+    "locality": "پگماتیت‌های ولایت نورستان (پاپروک، داره‌پیچ) و مرزهای بدخشان، بزرگترین تولیدکننده بلورهای دورنگ هندوانه‌ای و اندیکولیت آبی.",
+    "field_tests": [
+      "تست پیروالکتریسیته: با مالش ملایم به پشم یا حرارت ملایم خرده‌های باریک کاغذ را جذب می‌کند",
+      "چند رنگی نمایی: چرخش بلور تغییر بارز تیرگی و رنگ نشان می‌دهد"
+    ],
+    "primary_colors": [
+      "صورتی روبلیت",
+      "سبز زمردی ورده‌لیت",
+      "دو رنگ هندوانه‌ای"
+    ]
+  },
+  {
+    "id": "kunzite",
+    "name_fa": "کونزایت (اسپودومن صورتی)",
+    "name_en": "Kunzite (Pink Spodumene)",
+    "category": "gemstone",
+    "category_fa": "سنگ نیمه‌قیمتی (پگماتیتی)",
+    "category_en": "Gemstone / Pegmatite Silicate",
+    "formula": "LiAlSi₂O₆:Mn",
+    "mohs_min": 6.5,
+    "mohs_max": 7,
+    "mohs_display": "6.5 - 7.0",
+    "sg_min": 3.16,
+    "sg_max": 3.2,
+    "sg_display": "3.16 - 3.20",
+    "crystal_system": "مونوکلینیک (منشورهای تخت شیاردار)",
+    "cleavage": "کامل در دو جهت (۸۷ و ۹۳ درجه)",
+    "fracture": "ناهموار و شکننده",
+    "luster": "شیشه‌ای مرواریدی روی سطوح رخ",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#f472b6",
+      "#e879f9",
+      "#c084fc",
+      "#fbcfe8"
+    ],
+    "diagnostic": "پلئوکرومیسم فوق‌العاده قوی (از محور طولی صورتی سیر و از پهلو بی‌رنگ)، رخ مشخص زاویه قائمه، فسفرسانس طولانی پس از پرتو UV.",
+    "locality": "پگماتیت‌های عظیم دره مروی و کنر و ولایت لغمان و همجوار بدخشان؛ تأمین‌کننده بلورهای عظیم موزیالی تا چندین کیلوگرم.",
+    "field_tests": [
+      "تست نور UV: زیر نور فرابنفش موج‌بلند درخشش نارنجی-صورتی درخشانی دارد",
+      "زاویه رخ: ترک‌های طولی ظریف موازی با زاویه نزدیک ۹۰ درجه"
+    ],
+    "primary_colors": [
+      "صورتی یاسی",
+      "بنفش کم‌رنگ",
+      "سبز هایدنایت"
+    ]
+  },
+  {
+    "id": "quartz",
+    "name_fa": "کوارتز شفاف (دُر کوهی)",
+    "name_en": "Rock Crystal Quartz",
+    "category": "mineral",
+    "category_fa": "کانی سیلیکاتی",
+    "category_en": "Silicate Mineral",
+    "formula": "SiO₂",
+    "mohs_min": 7,
+    "mohs_max": 7,
+    "mohs_display": "7.0 (معیار موهس)",
+    "sg_min": 2.65,
+    "sg_max": 2.65,
+    "sg_display": "2.65",
+    "crystal_system": "تری‌گونال (منشورهای هگزاگونال با نوک هرمی)",
+    "cleavage": "فاقد رخ (رخ ندارد)",
+    "fracture": "صدفی شیشه‌ای کامل",
+    "luster": "شیشه‌ای پاک",
+    "streak": "سفید (روی چینی بدون اثر)",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#f8fafc",
+      "#e2e8f0",
+      "#cbd5e1"
+    ],
+    "diagnostic": "معیار سختی ۷ در جدول موهس، فقدان کامل رخ، شکستگی صدفی گرداب‌مانند، خطوط افقی باریک روی وجوه منشور.",
+    "locality": "بلورهای ژئود و رگه‌های حرارتی در سراسر رشته‌کوه‌های پامیر و هندوکش بدخشان و پنجشیر به وفور یافت می‌شود.",
+    "field_tests": [
+      "تست سختی: تیغه چاقو و شیشه را به آسانی می‌خراشد ولی خود خراش برنمی‌دارد",
+      "تست اسید: در اسید هیدروکلریک مطلقاً هیچ واکنشی نشان نمی‌دهد"
+    ],
+    "primary_colors": [
+      "کاملاً شفاف شیشه‌ای",
+      "شیری"
+    ]
+  },
+  {
+    "id": "amethyst",
+    "name_fa": "آمتیست (کوارتز بنفش)",
+    "name_en": "Amethyst Quartz",
+    "category": "gemstone",
+    "category_fa": "سنگ نیمه‌قیمتی",
+    "category_en": "Semi-precious Gemstone",
+    "formula": "SiO₂:Fe³⁺",
+    "mohs_min": 7,
+    "mohs_max": 7,
+    "mohs_display": "7.0",
+    "sg_min": 2.65,
+    "sg_max": 2.66,
+    "sg_display": "2.65",
+    "crystal_system": "تری‌گونال",
+    "cleavage": "فاقد رخ",
+    "fracture": "صدفی",
+    "luster": "شیشه‌ای",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#7e22ce",
+      "#6b21a8",
+      "#a855f7",
+      "#4c1d95"
+    ],
+    "diagnostic": "رنگ ارغوانی ناشی از نقص شبکه‌ای آهن، پدیده پهنه‌بندی رنگی هندسی در نوک بلورها.",
+    "locality": "یافت‌شده در رگه‌های هیدروترمال و پگماتیت‌های بدخشان و ولایت میدان وردک و هرات.",
+    "field_tests": [
+      "سختی ۷، عدم واکنش به اسید، عدم ذوب در شعله ملایم"
+    ],
+    "primary_colors": [
+      "بنفش یاسی",
+      "ارغوانی سیر"
+    ]
+  },
+  {
+    "id": "rose-quartz",
+    "name_fa": "کوارتز صورتی (رز کوارتز)",
+    "name_en": "Rose Quartz",
+    "category": "gemstone",
+    "category_fa": "سنگ نیمه‌قیمتی",
+    "category_en": "Semi-precious Gemstone",
+    "formula": "SiO₂:Ti,Mn",
+    "mohs_min": 7,
+    "mohs_max": 7,
+    "mohs_display": "7.0",
+    "sg_min": 2.65,
+    "sg_max": 2.65,
+    "sg_display": "2.65",
+    "crystal_system": "تری‌گونال (غالباً توده‌ای)",
+    "cleavage": "فاقد رخ",
+    "fracture": "صدفی ناهموار",
+    "luster": "شیشه‌ای تا کمی چرب",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#f43f5e",
+      "#fb7185",
+      "#fda4af"
+    ],
+    "diagnostic": "حالت توده‌ای نیمه‌شفاف با رنگ صورتی یکنواخت به دلیل وجود الیاف میکروسکوپی دامورتیریت/تیتانیوم.",
+    "locality": "در هسته پگماتیت‌های گرانیتی نورستان و کوهستان‌های شرقی افغانستان گزارش شده است.",
+    "field_tests": [
+      "سختی ۷ موهس، خط خراش روی شیشه پنجره"
+    ],
+    "primary_colors": [
+      "صورتی ملایم",
+      "صورتی گل‌بهی"
+    ]
+  },
+  {
+    "id": "smoky-quartz",
+    "name_fa": "کوارتز دودی",
+    "name_en": "Smoky Quartz",
+    "category": "gemstone",
+    "category_fa": "کانی سیلیکاتی نیمه‌قیمتی",
+    "category_en": "Silicate Gemstone",
+    "formula": "SiO₂:Al",
+    "mohs_min": 7,
+    "mohs_max": 7,
+    "mohs_display": "7.0",
+    "sg_min": 2.65,
+    "sg_max": 2.65,
+    "sg_display": "2.65",
+    "crystal_system": "تری‌گونال",
+    "cleavage": "ندارد",
+    "fracture": "صدفی کامل",
+    "luster": "شیشه‌ای درخشان",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#451a03",
+      "#78350f",
+      "#292524"
+    ],
+    "diagnostic": "شفاف تا نیمه‌شفاف با طیف رنگی دود قهوه‌ای و عدم حضور شکاف رخ.",
+    "locality": "در مجاورت رگه‌های لعل و پگماتیت‌های مناطق پامیر و هندوکش با بلورهای خوش‌تراش.",
+    "field_tests": [
+      "سختی ۷، عدم خراش با تیغه استیل، مقاوم در برابر حرارت تا ۵۰۰ درجه"
+    ],
+    "primary_colors": [
+      "قهوه‌ای دودی",
+      "خاکستری تیره",
+      "موریون سیاه"
+    ]
+  },
+  {
+    "id": "chalcedony-agate",
+    "name_fa": "عقیق / کلسدونی (آگات)",
+    "name_en": "Agate / Chalcedony",
+    "category": "gemstone",
+    "category_fa": "کانی کریپتوکریستالین",
+    "category_en": "Cryptocrystalline Gemstone",
+    "formula": "SiO₂ (میکروکریستالی)",
+    "mohs_min": 6.5,
+    "mohs_max": 7,
+    "mohs_display": "6.5 - 7.0",
+    "sg_min": 2.6,
+    "sg_max": 2.64,
+    "sg_display": "2.60 - 2.64",
+    "crystal_system": "کریپتوکریستالین (ریزبلورین)",
+    "cleavage": "ندارد",
+    "fracture": "صدفی تا موم‌مانند",
+    "luster": "مومی تا شیشه‌ای مات",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#b45309",
+      "#ea580c",
+      "#d97706",
+      "#94a3b8"
+    ],
+    "diagnostic": "ساختار لایه‌لایه هم‌مرکز، چقرمگی ضربه‌ای بسیار بالا، جلای مومی مشخص.",
+    "locality": "حفره‌های گدازه‌ای بازالتی در ولایات نیمروز، هلمند و رگه‌های بدخشان.",
+    "field_tests": [
+      "سختی ۶.۵-۷، صیقل‌پذیری درخشان، چقرمگی عالی در برابر چکش"
+    ],
+    "primary_colors": [
+      "نوارهای لایه‌ای موازی",
+      "عسلی",
+      "سرخ عقیقی",
+      "خاکستری"
+    ]
+  },
+  {
+    "id": "jasper",
+    "name_fa": "ژاسپر (یشم کوهی رسوبی)",
+    "name_en": "Jasper",
+    "category": "sedimentary",
+    "category_fa": "سنگ/کانی سیلیسی رسوبی",
+    "category_en": "Siliceous Sedimentary / Cryptocrystalline",
+    "formula": "SiO₂ + Fe₂O₃ (ناخالصی آهن)",
+    "mohs_min": 6.5,
+    "mohs_max": 7,
+    "mohs_display": "6.5 - 7.0",
+    "sg_min": 2.58,
+    "sg_max": 2.91,
+    "sg_display": "2.58 - 2.91",
+    "crystal_system": "کریپتوکریستالین",
+    "cleavage": "ندارد",
+    "fracture": "صدفی صاف و تخت",
+    "luster": "مات، مومی",
+    "streak": "سفید تا زرد کم‌رنگ",
+    "streak_hex": "#fef08a",
+    "color_swatches": [
+      "#b91c1c",
+      "#ca8a04",
+      "#713f12"
+    ],
+    "diagnostic": "کدر بودن کامل در لبه‌های نازک به دلیل اکسیدهای فشرده آهن، مقاومت مکانیکی بالا.",
+    "locality": "در بستر رودخانه‌های کوکچه و پنج آمودریا به صورت قلوه‌سنگ‌های صیقلی یافت می‌شود.",
+    "field_tests": [
+      "عدم عبور نور در مقطع نازک، سختی نزدیک ۷ موهس"
+    ],
+    "primary_colors": [
+      "قرمز خونی اکسیدی",
+      "زرد اخرایی",
+      "قهوه‌ای خاکی"
+    ]
+  },
+  {
+    "id": "pyrite",
+    "name_fa": "پیریت (طلای ابلهان / سولفید آهن)",
+    "name_en": "Pyrite (Fool’s Gold)",
+    "category": "mineral",
+    "category_fa": "کانی سولفیدی متالیک",
+    "category_en": "Sulfide Metallic Mineral",
+    "formula": "FeS₂",
+    "mohs_min": 6,
+    "mohs_max": 6.5,
+    "mohs_display": "6.0 - 6.5",
+    "sg_min": 4.95,
+    "sg_max": 5.1,
+    "sg_display": "4.95 - 5.10",
+    "crystal_system": "ایزومتریک (مکعبی و پیریتوهدرون)",
+    "cleavage": "ناقص",
+    "fracture": "صدفی تا نامنظم",
+    "luster": "فلزی درخشان برنجی",
+    "streak": "سبز-سیاه تا سیاه مایل به قهوه‌ای",
+    "streak_hex": "#1e293b",
+    "color_swatches": [
+      "#ca8a04",
+      "#eab308",
+      "#a16207"
+    ],
+    "diagnostic": "بلورهای مکعبی با خطوط متقاطع ظریف روی وجوه، چگالی بالا (~۵)، شکنندگی در برابر ضربه (بر خلاف طلای واقعی که چکش‌خوار است).",
+    "locality": "جزء لاینفک و شاخصه زیبایی در لاجورد سرسنگ بدخشان به شکل دانه‌های طلایی متالیک.",
+    "field_tests": [
+      "تست خاکه: برخلاف طلای طبیعی که خاکه طلایی دارد، خاکه پیریت سیاه مایل به سبز تیره است",
+      "تست چکش: بر اثر ضربه پودر می‌شود و بوی گوگرد می‌دهد، در حالی که طلا پهن می‌شود"
+    ],
+    "primary_colors": [
+      "زرد برنجی متالیک",
+      "طلایی تیره"
+    ]
+  },
+  {
+    "id": "chalcopyrite",
+    "name_fa": "کالکوپیریت (سولفید مس و آهن)",
+    "name_en": "Chalcopyrite",
+    "category": "mineral",
+    "category_fa": "کانی سولفیدی فلزی",
+    "category_en": "Sulfide Copper Ore",
+    "formula": "CuFeS₂",
+    "mohs_min": 3.5,
+    "mohs_max": 4,
+    "mohs_display": "3.5 - 4.0",
+    "sg_min": 4.1,
+    "sg_max": 4.3,
+    "sg_display": "4.10 - 4.30",
+    "crystal_system": "تتراگونال",
+    "cleavage": "ناقص",
+    "fracture": "ناهموار",
+    "luster": "فلزی با جلای هفت‌رنگ رنگین‌کمانی",
+    "streak": "سبز مایل به سیاه",
+    "streak_hex": "#0f172a",
+    "color_swatches": [
+      "#854d0e",
+      "#a16207",
+      "#4338ca"
+    ],
+    "diagnostic": "سختی کمتر از پیریت (با چاقو ۳.۵ خراشیده می‌شود)، جلای رنگین‌کمانی اکسیداسیون سطحی.",
+    "locality": "در پهنه‌های مس عینک لوگر و ذخایر مس هیدروترمال بدخشان و بلخاب.",
+    "field_tests": [
+      "سختی ۳.۵-۴ (پیریت ۶.۵ است)، با چاقو به راحتی پودر سیاه خاکه می‌دهد"
+    ],
+    "primary_colors": [
+      "زرد طلایی پررنگ",
+      "هفت‌رنگ طاووسی اکسیدی"
+    ]
+  },
+  {
+    "id": "malachite",
+    "name_fa": "مالاکیت (کربنات مس سبز)",
+    "name_en": "Malachite",
+    "category": "mineral",
+    "category_fa": "کانی کربناته مس",
+    "category_en": "Carbonate Mineral",
+    "formula": "Cu₂CO₃(OH)₂",
+    "mohs_min": 3.5,
+    "mohs_max": 4,
+    "mohs_display": "3.5 - 4.0",
+    "sg_min": 3.6,
+    "sg_max": 4,
+    "sg_display": "3.60 - 4.00",
+    "crystal_system": "مونوکلینیک (توده‌ای بوتروئیدال)",
+    "cleavage": "کامل ولی به ندرت دیده می‌شود",
+    "fracture": "صدفی تا ریزالیافی",
+    "luster": "ابریشمی تا مومی و شیشه‌ای",
+    "streak": "سبز روشن کم‌رنگ",
+    "streak_hex": "#86efac",
+    "color_swatches": [
+      "#166534",
+      "#15803d",
+      "#22c55e",
+      "#14532d"
+    ],
+    "diagnostic": "ساختار نواری لایه‌ای سبز تیره و روشن (شبیه چشم طاووس)، جوشش شدید در اسید هیدروکلریک.",
+    "locality": "زون‌های اکسیداسیون رخنمون‌های مس در بدخشان و کانسار مس عینک.",
+    "field_tests": [
+      "تست اسید: قطره اسید رقیق فوراً با کف و حباب دی‌اکسید کربن واکنش می‌دهد",
+      "تست خاکه: رنگ خاکه سبز روشن تشخیصی بر جای می‌گذارد"
+    ],
+    "primary_colors": [
+      "سبز زمردی تیره",
+      "نوارهای سبز روشن متناوب"
+    ]
+  },
+  {
+    "id": "azurite",
+    "name_fa": "آزوریت (کربنات مس آبی)",
+    "name_en": "Azurite",
+    "category": "mineral",
+    "category_fa": "کانی کربناته مس",
+    "category_en": "Carbonate Mineral",
+    "formula": "Cu₃(CO₃)₂(OH)₂",
+    "mohs_min": 3.5,
+    "mohs_max": 4,
+    "mohs_display": "3.5 - 4.0",
+    "sg_min": 3.77,
+    "sg_max": 3.89,
+    "sg_display": "3.77 - 3.89",
+    "crystal_system": "مونوکلینیک",
+    "cleavage": "کامل",
+    "fracture": "صدفی",
+    "luster": "شیشه‌ای درخشان تا الماسی",
+    "streak": "آبی آسمانی روشن",
+    "streak_hex": "#93c5fd",
+    "color_swatches": [
+      "#1e40af",
+      "#1d4ed8",
+      "#172554"
+    ],
+    "diagnostic": "رنگ آبی بسیار سیر و شفاف، همراهی متداول با مالاکیت سبز، جوشش با اسید رقیق.",
+    "locality": "همراه با کانسنگ‌های مس و رگه‌های کربناته کلسیت در کوهستان‌های شمال‌شرق افغانستان.",
+    "field_tests": [
+      "جوشش در تماس با HCl، خاکه آبی مشخص"
+    ],
+    "primary_colors": [
+      "آبی سیر لاجوردی عمیق",
+      "آبی سلطنتی"
+    ]
+  },
+  {
+    "id": "turquoise",
+    "name_fa": "فیروزه",
+    "name_en": "Turquoise",
+    "category": "gemstone",
+    "category_fa": "فسفات مس و آلومینیوم (سنگ قیمتی)",
+    "category_en": "Phosphate Gemstone",
+    "formula": "CuAl₆(PO₄)₄(OH)₈·4H₂O",
+    "mohs_min": 5,
+    "mohs_max": 6,
+    "mohs_display": "5.0 - 6.0",
+    "sg_min": 2.6,
+    "sg_max": 2.9,
+    "sg_display": "2.60 - 2.90",
+    "crystal_system": "تری‌کلینیک (کریپتوکریستالین توده‌ای)",
+    "cleavage": "کامل (در بلور نادر)",
+    "fracture": "صدفی ریز تا خاکی",
+    "luster": "مومی تا چینی",
+    "streak": "سفید مایل به سبز مایل به آبی کم‌رنگ",
+    "streak_hex": "#e0f2fe",
+    "color_swatches": [
+      "#06b6d4",
+      "#0891b2",
+      "#78350f"
+    ],
+    "diagnostic": "جلای مومی، رنگ آبی فیروزه‌ای آسمانی پایدار، رگه‌های عنکبوتی ماتریکس سنگ مادر (لیمونیت/ماسه).",
+    "locality": "رگه‌های دگرسانی هیدروترمال در مرزهای غربی و رسوبات آبرفتی بدخشان و کابل.",
+    "field_tests": [
+      "سختی ۵-۶ (سخت‌تر از پلاستیک بدلی، با سوزن داغ بوی سوختگی نمی‌دهد)"
+    ],
+    "primary_colors": [
+      "آبی فیروزه‌ای آسمانی",
+      "سبز آبی نیشابوری",
+      "رگه‌های قهوه‌ای لیمونیت"
+    ]
+  },
+  {
+    "id": "calcite",
+    "name_fa": "کلسیت (کربنات کلسیم)",
+    "name_en": "Calcite",
+    "category": "mineral",
+    "category_fa": "کانی کربناته",
+    "category_en": "Carbonate Mineral",
+    "formula": "CaCO₃",
+    "mohs_min": 3,
+    "mohs_max": 3,
+    "mohs_display": "3.0 (معیار موهس)",
+    "sg_min": 2.71,
+    "sg_max": 2.71,
+    "sg_display": "2.71",
+    "crystal_system": "تری‌گونال (رومبوهدرال)",
+    "cleavage": "کامل رومبوهدرال در ۳ جهت (۷۵ درجه)",
+    "fracture": "پله‌ای در امتداد سطوح رخ",
+    "luster": "شیشه‌ای تا مرواریدی روی سطوح رخ",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#f8fafc",
+      "#e2e8f0",
+      "#fef08a"
+    ],
+    "diagnostic": "معیار سختی ۳ جدول موهس، جوشش شدید و سریع با اسید سرد رقیق، دوشکستگی نوری فوق‌العاده قوی (دو تصویر کردن نوشته).",
+    "locality": "سنگ میزبان مرمرهای کلسیت دربرگیرنده لاجورد سرسنگ بدخشان و ذخایر کارستی کوهستانی.",
+    "field_tests": [
+      "تست اسید: قطره اسید هیدروکلریک سرد فوراً با صدای جوشش شدید گاز CO₂ آزاد می‌کند",
+      "تست دوتایی تصویر: نمونه بلوری شفاف روی متن خطوط را دوگانه نشان می‌دهد",
+      "تست سختی: با سکه مسی و چاقو به راحتی خراش می‌افتد"
+    ],
+    "primary_colors": [
+      "بی‌رنگ شفاف (اسپار ایسلندی)",
+      "سفید شیری",
+      "عسلی طلایی"
+    ]
+  },
+  {
+    "id": "aragonite",
+    "name_fa": "آراگونیت",
+    "name_en": "Aragonite",
+    "category": "mineral",
+    "category_fa": "کانی کربناته",
+    "category_en": "Carbonate Polymorph",
+    "formula": "CaCO₃",
+    "mohs_min": 3.5,
+    "mohs_max": 4,
+    "mohs_display": "3.5 - 4.0",
+    "sg_min": 2.93,
+    "sg_max": 2.95,
+    "sg_display": "2.93 - 2.95",
+    "crystal_system": "ارتورومبیک (بلورهای ستونی و دوقلوهای شش‌گوش کاذب)",
+    "cleavage": "مشخص در یک جهت",
+    "fracture": "صدفی تا نامنظم",
+    "luster": "شیشه‌ای تا صمغی",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#fef3c7",
+      "#d97706",
+      "#bae6fd"
+    ],
+    "diagnostic": "پلی‌مورف چگال‌تر کلسیت، بلورهای سوزنی شعاعی یا دوقلوهای استوانه‌ای، جوشش با اسید، تست با محلول مایلون (قرمز شدن).",
+    "locality": "چشمه‌های آب‌گرم معدنی و غارهای کارستی بدخشان و بامیان.",
+    "field_tests": [
+      "سختی ۳.۵-۴ (سخت‌تر از کلسیت ۳)، جوشش در اسید"
+    ],
+    "primary_colors": [
+      "سفید",
+      "کهربایی قهوه‌ای",
+      "آبی آسمانی"
+    ]
+  },
+  {
+    "id": "fluorite",
+    "name_fa": "فلوریت (فلوئورید کلسیم)",
+    "name_en": "Fluorite",
+    "category": "mineral",
+    "category_fa": "کانی هالوئیدی",
+    "category_en": "Halide Mineral",
+    "formula": "CaF₂",
+    "mohs_min": 4,
+    "mohs_max": 4,
+    "mohs_display": "4.0 (معیار موهس)",
+    "sg_min": 3.18,
+    "sg_max": 3.18,
+    "sg_display": "3.18",
+    "crystal_system": "ایزومتریک (مکعبی و اکتاهدرال)",
+    "cleavage": "کامل اکتاهدرال در ۴ جهت",
+    "fracture": "صدفی پله‌ای",
+    "luster": "شیشه‌ای براق",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#8b5cf6",
+      "#10b981",
+      "#facc15",
+      "#e2e8f0"
+    ],
+    "diagnostic": "معیار سختی ۴ جدول موهس، رخ بی‌نظیر هشت‌وجهی، فلوئورسانس خیره‌کننده آبی زیر پرتو UV (منشأ واژه فلوئورسانس).",
+    "locality": "کانسار باقران در ولایت هلمند و رگه‌های هیدروترمال بدخشان.",
+    "field_tests": [
+      "تست سختی: با تیغه چاقو خراشیده می‌شود، اما سکه مسی را خراش می‌دهد",
+      "تست فرابنفش UV: درخشش شدید آبی-بنفش زیر نور UV 365 نانومتر"
+    ],
+    "primary_colors": [
+      "بنفش سیر",
+      "سبز دریایی",
+      "زرد لیمویی",
+      "بی‌رنگ"
+    ]
+  },
+  {
+    "id": "hematite",
+    "name_fa": "هماتیت (اکسید آهن)",
+    "name_en": "Hematite",
+    "category": "mineral",
+    "category_fa": "کانی اکسیدی فلزی",
+    "category_en": "Oxide Iron Ore",
+    "formula": "Fe₂O₃",
+    "mohs_min": 5.5,
+    "mohs_max": 6.5,
+    "mohs_display": "5.5 - 6.5",
+    "sg_min": 5.26,
+    "sg_max": 5.26,
+    "sg_display": "5.26",
+    "crystal_system": "تری‌گونال",
+    "cleavage": "ندارد (جدایش کاذب)",
+    "fracture": "ناهموار تا صدفی ریز",
+    "luster": "فلزی براق نقره‌ای تا خاکی مات",
+    "streak": "قرمز زنگاری تا قهوه‌ای آلبالویی تشخیصی",
+    "streak_hex": "#991b1b",
+    "color_swatches": [
+      "#334155",
+      "#475569",
+      "#7f1d1d"
+    ],
+    "diagnostic": "رنگ خاکه قرمز گیلاسی قطعی (حتی اگر سنگ کاملاً نقره‌ای براق متالیک باشد)، چگالی بالا (>۵.۲)، غیرمغناطیسی در حالت عادی.",
+    "locality": "حاجی‌گک بامیان (بزرگترین کانسار آهن دست‌نخورده آسیا با بیش از ۱.۸ میلیارد تن) و توده‌های آهن بدخشان.",
+    "field_tests": [
+      "تست خاکه: روی پشت سرامیک یا کاشی خط قرمز خونی بارز بر جای می‌گذارد",
+      "تست مغناطیس: برخلاف مگنتیت آهنربا را جذب نمی‌کند (مگر در حرارت بالا)"
+    ],
+    "primary_colors": [
+      "خاکستری نقره‌ای متالیک (آینه‌ای)",
+      "سرخ اخرایی"
+    ]
+  },
+  {
+    "id": "magnetite",
+    "name_fa": "مگنتیت (اکسید مغناطیسی آهن)",
+    "name_en": "Magnetite",
+    "category": "mineral",
+    "category_fa": "کانی اکسیدی فرومغناطیس",
+    "category_en": "Ferromagnetic Oxide Ore",
+    "formula": "Fe₃O₄",
+    "mohs_min": 5.5,
+    "mohs_max": 6.5,
+    "mohs_display": "5.5 - 6.5",
+    "sg_min": 5.17,
+    "sg_max": 5.18,
+    "sg_display": "5.17 - 5.18",
+    "crystal_system": "ایزومتریک (بلورهای هشت‌وجهی اکتاهدرال)",
+    "cleavage": "ندارد (جدایش اکتاهدرال)",
+    "fracture": "ناهموار تا صدفی ریز",
+    "luster": "فلزی تا نیمه‌فلزی مات",
+    "streak": "سیاه یکدست",
+    "streak_hex": "#020617",
+    "color_swatches": [
+      "#0f172a",
+      "#1e293b",
+      "#334155"
+    ],
+    "diagnostic": "خاصیت فرومغناطیسی شدید (آهنربا را با قدرت جذب می‌کند)، بلورهای هشت‌وجهی درخشان، خاکه کاملاً سیاه (تفاوت با هماتیت).",
+    "locality": "اسکارن‌های بدخشان و کانسنگ‌های پهنه حاجی‌گک و کوتل پامیر.",
+    "field_tests": [
+      "تست آهنربا: آهنربای نئودیمیوم یا قطب‌نما فوراً به سمت آن منحرف می‌شود",
+      "تست خاکه: خاکه سیاه خالص (تفاوت قطعی با خاکه قرمز هماتیت)"
+    ],
+    "primary_colors": [
+      "سیاه آهنی تیره",
+      "خاکستری تیره متالیک"
+    ]
+  },
+  {
+    "id": "galena",
+    "name_fa": "گالن (سولفید سرب)",
+    "name_en": "Galena",
+    "category": "mineral",
+    "category_fa": "کانی سولفیدی فلزی",
+    "category_en": "Lead Sulfide Ore",
+    "formula": "PbS",
+    "mohs_min": 2.5,
+    "mohs_max": 2.75,
+    "mohs_display": "2.5 - 2.75",
+    "sg_min": 7.4,
+    "sg_max": 7.6,
+    "sg_display": "7.40 - 7.60",
+    "crystal_system": "ایزومتریک (مکعبی)",
+    "cleavage": "کامل مکعبی در ۳ جهت متعامد",
+    "fracture": "پله‌ای در امتداد مکعب‌ها",
+    "luster": "فلزی سربی براق و سنگین",
+    "streak": "خاکستری سربی",
+    "streak_hex": "#475569",
+    "color_swatches": [
+      "#334155",
+      "#64748b",
+      "#94a3b8"
+    ],
+    "diagnostic": "چگالی فوق‌العاده سنگین (~۷.۵)، رخ مکعبی کامل، سختی بسیار پایین (با ناخن یا سکه خراش می‌خورد)، حامل نقره طبیعی.",
+    "locality": "معادن تاریخی سرب و نقره دره فرنج غوربند و رگه‌های بدخشان.",
+    "field_tests": [
+      "وزن در دست: سنگینی غیرعادی احساس می‌شود، خراش آسان با سکه مسی"
+    ],
+    "primary_colors": [
+      "خاکستری سربی روشن",
+      "سربی نقره‌ای"
+    ]
+  },
+  {
+    "id": "sphalerite",
+    "name_fa": "اسفالریت (سولفید روی)",
+    "name_en": "Sphalerite",
+    "category": "mineral",
+    "category_fa": "کانی سولفیدی روی",
+    "category_en": "Zinc Sulfide Ore",
+    "formula": "(Zn,Fe)S",
+    "mohs_min": 3.5,
+    "mohs_max": 4,
+    "mohs_display": "3.5 - 4.0",
+    "sg_min": 3.9,
+    "sg_max": 4.2,
+    "sg_display": "3.90 - 4.20",
+    "crystal_system": "ایزومتریک (تتراهدرال و دودکاهدرال)",
+    "cleavage": "کامل در ۶ جهت دودکاهدرال",
+    "fracture": "صدفی",
+    "luster": "صمغی تا الماسی و نیمه‌فلزی",
+    "streak": "سفید مایل به زرد قهوه‌ای کم‌رنگ",
+    "streak_hex": "#fef08a",
+    "color_swatches": [
+      "#713f12",
+      "#a16207",
+      "#1c1917"
+    ],
+    "diagnostic": "جلای صمغی صمغ‌مانند، رخ ۶ جهته استثنایی، بوی ملایم تخم‌مرغ گندیده (H₂S) هنگام خراشیدن شدید با پودر.",
+    "locality": "همراه با گالن در پهنه‌های سولفیدی بدخشان و غوربند.",
+    "field_tests": [
+      "جلای صمغی، خاکه مایل به زرد، بوی سولفور هنگام کوبیدن"
+    ],
+    "primary_colors": [
+      "قهوه‌ای صمغی",
+      "زرد عسلی",
+      "سیاه آهن‌دار (بلند)"
+    ]
+  },
+  {
+    "id": "gypsum",
+    "name_fa": "ژیپس / سلنیت (سنگ گچ)",
+    "name_en": "Gypsum / Selenite",
+    "category": "mineral",
+    "category_fa": "کانی سولفاته رسوبی",
+    "category_en": "Sulfate Mineral",
+    "formula": "CaSO₄·2H₂O",
+    "mohs_min": 2,
+    "mohs_max": 2,
+    "mohs_display": "2.0 (معیار موهس)",
+    "sg_min": 2.31,
+    "sg_max": 2.33,
+    "sg_display": "2.31 - 2.33",
+    "crystal_system": "مونوکلینیک (بلورهای دم‌چلچله‌ای)",
+    "cleavage": "بسیار کامل در یک جهت",
+    "fracture": "ناهموار تا ریشه‌دار",
+    "luster": "شیشه‌ای تا مرواریدی و ابریشمی",
+    "streak": "سفید خالص",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#ffffff",
+      "#f1f5f9",
+      "#e2e8f0"
+    ],
+    "diagnostic": "معیار سختی ۲ جدول موهس، با ناخن انگشت انسان (۲.۵) به راحتی خراش عمیق برمی‌دارد، ورقه‌های منعطف اما فاقد حالت فنری.",
+    "locality": "حوزه‌های تبخیری رسوبی کندز، تخار و نواحی حاشیه‌ای رود کوکچه در بدخشان.",
+    "field_tests": [
+      "تست ناخن: ناخن دست انسان بدون زحمت روی آن خط عمیق می‌اندازد",
+      "تست حرارت: در حرارت ملایم آب ساختمانی خود را از دست داده و گچ سفید مات پودری می‌شود"
+    ],
+    "primary_colors": [
+      "بی‌رنگ شفاف (سلنیت)",
+      "سفید گچی",
+      "ساتین اسپار ابریشمی"
+    ]
+  },
+  {
+    "id": "talc",
+    "name_fa": "تالک (صابون‌سنگ / سنگ استاتیت)",
+    "name_en": "Talc (Soapstone / Steatite)",
+    "category": "metamorphic",
+    "category_fa": "کانی دگرگونی سیلیکاتی",
+    "category_en": "Metamorphic Silicate",
+    "formula": "Mg₃Si₄O₁₀(OH)₂",
+    "mohs_min": 1,
+    "mohs_max": 1,
+    "mohs_display": "1.0 (معیار موهس)",
+    "sg_min": 2.7,
+    "sg_max": 2.8,
+    "sg_display": "2.70 - 2.80",
+    "crystal_system": "مونوکلینیک (توده‌ای پولکی)",
+    "cleavage": "کامل قاعده‌ای (مانند میکا)",
+    "fracture": "ناهموار",
+    "luster": "مرواریدی تا چرب و صابونی",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#dcfce7",
+      "#f1f5f9",
+      "#94a3b8"
+    ],
+    "diagnostic": "نرم‌ترین کانی جهان (معیار سختی ۱ موهس)، لمس لغزنده و کاملاً صابونی، قابلیت تراش بسیار آسان با چاقو یا ناخن.",
+    "locality": "معادن بزرگ تالک و سنگ صابون در ولایت ننگرهار (شیرزاد) و دگرگونی‌های مافیک بدخشان.",
+    "field_tests": [
+      "حس لامسه: لمس صابونی و چرب ملموس",
+      "تست سختی: ناخن به سادگی آن را تراشیده و پودر سفید لغزنده تولید می‌کند"
+    ],
+    "primary_colors": [
+      "سبز کم‌رنگ نعنایی",
+      "سفید مرواریدی",
+      "خاکستری صابونی"
+    ]
+  },
+  {
+    "id": "serpentinite",
+    "name_fa": "سرپانتینیت / سرپانتین (سنگ پوست ماری)",
+    "name_en": "Serpentinite / Serpentine",
+    "category": "metamorphic",
+    "category_fa": "سنگ دگرگونی اولترامافیک",
+    "category_en": "Ultramafic Metamorphic Rock",
+    "formula": "(Mg,Fe)₃Si₂O₅(OH)₄",
+    "mohs_min": 2.5,
+    "mohs_max": 5,
+    "mohs_display": "2.5 - 5.0",
+    "sg_min": 2.5,
+    "sg_max": 2.65,
+    "sg_display": "2.50 - 2.65",
+    "crystal_system": "مونوکلینیک / ارتورومبیک (توده‌ای الیافی)",
+    "cleavage": "نامشخص در بافت توده‌ای",
+    "fracture": "صدفی ریز تا ناهموار و الیافی",
+    "luster": "چرب، مومی تا ابریشمی",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#14532d",
+      "#15803d",
+      "#4ade80",
+      "#1c1917"
+    ],
+    "diagnostic": "بافت سطحی طرح پوست مار، لمس لغزنده یا صمغی، خطوط صیقلی لغزش تکتونیکی (اسلیکنساید).",
+    "locality": "افیولیت‌های زون درز کابل-بدخشان و نوار افیولیتی آمودریا.",
+    "field_tests": [
+      "جلای مومی، سختی متغیر ۲.۵ تا ۴، عدم جوشش با اسید سرد"
+    ],
+    "primary_colors": [
+      "سبز روغنی زیتونی",
+      "لکه لکه سیاه و سبز مارمانند"
+    ]
+  },
+  {
+    "id": "garnet",
+    "name_fa": "گارنت / آلماندین (لعل پیاز)",
+    "name_en": "Garnet (Almandine / Pyrope)",
+    "category": "gemstone",
+    "category_fa": "کانی دگرگونی / سنگ قیمتی",
+    "category_en": "Metamorphic Gemstone",
+    "formula": "Fe₃Al₂(SiO₄)₃",
+    "mohs_min": 7,
+    "mohs_max": 7.5,
+    "mohs_display": "7.0 - 7.5",
+    "sg_min": 3.95,
+    "sg_max": 4.3,
+    "sg_display": "3.95 - 4.30",
+    "crystal_system": "ایزومتریک (رومبیک دودکاهدرون)",
+    "cleavage": "فاقد رخ (رخ ندارد)",
+    "fracture": "صدفی تا ناهموار",
+    "luster": "شیشه‌ای تا صمغی براق",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#881337",
+      "#9f1239",
+      "#4c0519"
+    ],
+    "diagnostic": "بلورهای ۱۲ وجهی کروی‌مانند، سختی بالای ۷، شکستگی صدفی، چگالی بالا و رنگ سرخ اناری.",
+    "locality": "شیست‌های دگرگونی میکایی در سرتاسر دره‌های بدخشان و ولایت کابل و پنجشیر.",
+    "field_tests": [
+      "سختی ۷-۷.۵، عدم خراش با کوارتز، فقدان رخ مسطح"
+    ],
+    "primary_colors": [
+      "قرمز شرابی تیره",
+      "قهوه‌ای سرخ",
+      "ارغوانی اناری"
+    ]
+  },
+  {
+    "id": "orthoclase",
+    "name_fa": "ارتوکلاز (فلدسپار پتاسیک)",
+    "name_en": "Orthoclase (K-Feldspar)",
+    "category": "mineral",
+    "category_fa": "کانی تکتوسیلیکات",
+    "category_en": "Tectosilicate Mineral",
+    "formula": "KAlSi₃O₈",
+    "mohs_min": 6,
+    "mohs_max": 6,
+    "mohs_display": "6.0 (معیار موهس)",
+    "sg_min": 2.56,
+    "sg_max": 2.58,
+    "sg_display": "2.56 - 2.58",
+    "crystal_system": "مونوکلینیک (منشوری با سطوح رخ ۹۰ درجه)",
+    "cleavage": "کامل در دو جهت با زاویه دقیق ۹۰ درجه",
+    "fracture": "پله‌ای تا ناهموار",
+    "luster": "شیشه‌ای تا مرواریدی روی سطوح رخ",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#f87171",
+      "#fbcfe8",
+      "#fed7aa"
+    ],
+    "diagnostic": "معیار سختی ۶ جدول موهس، رخ دو جهته با زاویه ۹۰ درجه، رنگ صورتی سالمون در سنگ گرانیت.",
+    "locality": "پگماتیت‌های بدخشان و باتولیت‌های گرانیتی کوهستان‌های شمال افغانستان.",
+    "field_tests": [
+      "سختی ۶ موهس، زاویه رخ ۹۰ درجه"
+    ],
+    "primary_colors": [
+      "صورتی گوشتی / ماهی آزاد",
+      "کرمی مایل به سفید"
+    ]
+  },
+  {
+    "id": "plagioclase",
+    "name_fa": "پلاژیوکلاز (فلدسپار سدیک-کلسیک)",
+    "name_en": "Plagioclase Feldspar",
+    "category": "mineral",
+    "category_fa": "کانی تکتوسیلیکات",
+    "category_en": "Tectosilicate Mineral",
+    "formula": "(Na,Ca)(Si,Al)₄O₈",
+    "mohs_min": 6,
+    "mohs_max": 6.5,
+    "mohs_display": "6.0 - 6.5",
+    "sg_min": 2.62,
+    "sg_max": 2.76,
+    "sg_display": "2.62 - 2.76",
+    "crystal_system": "تری‌کلینیک",
+    "cleavage": "کامل در دو جهت با زاویه ۸۶ درجه",
+    "fracture": "ناهموار تا صدفی ریز",
+    "luster": "شیشه‌ای تا مرواریدی",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#e2e8f0",
+      "#cbd5e1",
+      "#38bdf8"
+    ],
+    "diagnostic": "خطوط شیاری دوقلویی موازی (Striations) روی سطوح رخ، سختی ۶، زاویه مایل رخ ۸۶ درجه.",
+    "locality": "سنگ‌های آذرین دیوریتی و بازالت‌های بدخشان و کوتل‌های سالنگ.",
+    "field_tests": [
+      "خطوط دوقلویی موازی میکروسکوپی زیر ذره‌بین لوپ"
+    ],
+    "primary_colors": [
+      "سفید شیری",
+      "خاکستری روشن",
+      "لابرادورسنس رنگین‌کمانی"
+    ]
+  },
+  {
+    "id": "muscovite",
+    "name_fa": "مسکوویت (میکای سفید ورقه‌ای)",
+    "name_en": "Muscovite (White Mica)",
+    "category": "mineral",
+    "category_fa": "کانی فیلوسیلیکات دگرگونی",
+    "category_en": "Phyllosilicate Mineral",
+    "formula": "KAl₂(AlSi₃O₁₀)(F,OH)₂",
+    "mohs_min": 2,
+    "mohs_max": 2.5,
+    "mohs_display": "2.0 - 2.5",
+    "sg_min": 2.77,
+    "sg_max": 2.88,
+    "sg_display": "2.77 - 2.88",
+    "crystal_system": "مونوکلینیک (بلورهای لوحه‌ای با رخ کتابی)",
+    "cleavage": "فوق‌العاده کامل در یک جهت (ورقه‌ای)",
+    "fracture": "ناهموار در لبه ورقه‌ها",
+    "luster": "مرواریدی براق تا ابریشمی",
+    "streak": "سفید بی‌رنگ",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#f8fafc",
+      "#e2e8f0",
+      "#cbd5e1"
+    ],
+    "diagnostic": "جدایش به ورقه‌های فوق‌العاده نازک و شفاف ارتجاعی (با خم کردن فنری به حالت اول برمی‌گردد).",
+    "locality": "کتاب‌های بزرگ میکا در پگماتیت‌های نورستان و شیست‌های میکادار بدخشان.",
+    "field_tests": [
+      "تست انعطاف‌پذیری: ورقه نازک با خم شدن نمی‌شکند و حالت فنری ارتجاعی دارد",
+      "تست عایق: عایق حرارتی و الکتریکی کامل"
+    ],
+    "primary_colors": [
+      "شفاف نقره‌ای",
+      "سفید مرواریدی درخشان"
+    ]
+  },
+  {
+    "id": "biotite",
+    "name_fa": "بیوتیت (میکای سیاه ورقه‌ای)",
+    "name_en": "Biotite (Black Mica)",
+    "category": "mineral",
+    "category_fa": "کانی فیلوسیلیکات مافیک",
+    "category_en": "Phyllosilicate Mineral",
+    "formula": "K(Mg,Fe)₃AlSi₃O₁₀(OH)₂",
+    "mohs_min": 2.5,
+    "mohs_max": 3,
+    "mohs_display": "2.5 - 3.0",
+    "sg_min": 2.7,
+    "sg_max": 3.1,
+    "sg_display": "2.70 - 3.10",
+    "crystal_system": "مونوکلینیک (ورقه‌ای)",
+    "cleavage": "فوق‌العاده کامل ورقه‌ای",
+    "fracture": "ناهموار",
+    "luster": "شیشه‌ای تا مرواریدی بر روی رخ",
+    "streak": "خاکستری مایل به سفید",
+    "streak_hex": "#e2e8f0",
+    "color_swatches": [
+      "#1c1917",
+      "#292524",
+      "#44403c"
+    ],
+    "diagnostic": "پولک‌های سیاه براق ارتجاعی، غنی از آهن و منیزیم، رنگ تیره در سنگ گرانیت و شیست.",
+    "locality": "جزء اصلی سنگ‌های گرانیتی و گنیس‌های دگرگونی هندوکش بدخشان.",
+    "field_tests": [
+      "ورقه‌ورقه شدن آسان با نوک سوزن، رنگ سیاه تیره، ارتجاعی بودن ورقه‌ها"
+    ],
+    "primary_colors": [
+      "قهوه‌ای سوخته تیره",
+      "سیاه متالیک براق"
+    ]
+  },
+  {
+    "id": "hornblende",
+    "name_fa": "هورنبلاند (آمفیبول سیاه)",
+    "name_en": "Hornblende (Amphibole)",
+    "category": "mineral",
+    "category_fa": "کانی اینوسیلیکات نواری",
+    "category_en": "Inosilicate Amphibole",
+    "formula": "(Ca,Na)₂₋₃(Mg,Fe,Al)₅(Al,Si)₈O₂₂(OH,F)₂",
+    "mohs_min": 5,
+    "mohs_max": 6,
+    "mohs_display": "5.0 - 6.0",
+    "sg_min": 3,
+    "sg_max": 3.4,
+    "sg_display": "3.00 - 3.40",
+    "crystal_system": "مونوکلینیک (بلورهای منشوری ستونی)",
+    "cleavage": "کامل در دو جهت با زاویه شاخص ۱۲۴ و ۵۶ درجه",
+    "fracture": "ناهموار و شکننده",
+    "luster": "شیشه‌ای براق تا ابریشمی کدر",
+    "streak": "سفید مایل به خاکستری یا سبز کم‌رنگ",
+    "streak_hex": "#e2e8f0",
+    "color_swatches": [
+      "#09090b",
+      "#052e16",
+      "#1e293b"
+    ],
+    "diagnostic": "زاویه دو سطحی رخ ۵۶ و ۱۲۴ درجه (تفاوت اساسی با پیروکسن که ۸۷ و ۹۳ درجه است)، منشورهای دراز الماس‌مانند.",
+    "locality": "دیوریت‌ها و آمفیبولیت‌های کران و منجان بدخشان و کوه‌های پنجشیر.",
+    "field_tests": [
+      "سختی ۵.۵ با چاقو، منشورهای دراز سیاه با بازتاب نوری زاویه ۱۲۴ درجه"
+    ],
+    "primary_colors": [
+      "سیاه قیرگون",
+      "سبز بسیار تیره متمایل به سیاه"
+    ]
+  },
+  {
+    "id": "olivine",
+    "name_fa": "الیوین / پریدوت / زبرجد",
+    "name_en": "Olivine / Peridot",
+    "category": "gemstone",
+    "category_fa": "کانی نزوسیلیکات گوشته زمین / گوهر",
+    "category_en": "Nesosilicate Gemstone",
+    "formula": "(Mg,Fe)₂SiO₄",
+    "mohs_min": 6.5,
+    "mohs_max": 7,
+    "mohs_display": "6.5 - 7.0",
+    "sg_min": 3.27,
+    "sg_max": 4.37,
+    "sg_display": "3.27 - 4.37",
+    "crystal_system": "ارتورومبیک (دانه‌ای شکری در سنگ)",
+    "cleavage": "ناقص",
+    "fracture": "صدفی شیشه‌ای کامل",
+    "luster": "شیشه‌ای روغنی درخشان",
+    "streak": "سفید بی‌رنگ",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#65a30d",
+      "#84cc16",
+      "#4d7c0f"
+    ],
+    "diagnostic": "رنگ شاخص سبز زیتونی، بافت دانه‌ای، جلای شیشه‌ای-چرب، منشأ عمیق گوشته زمین در پریدوتیت و بازالت.",
+    "locality": "زنولیت‌های گوشته‌ای در پریدوتیت‌ها و افیولیت‌های بدخشان و ولایت پکتیا.",
+    "field_tests": [
+      "سختی ۶.۵-۷، جلای روغنی سبز زیتونی، عدم حل در اسید سرد"
+    ],
+    "primary_colors": [
+      "سبز زیتونی شفاف",
+      "سبز چمنی روغنی"
+    ]
+  },
+  {
+    "id": "epidote",
+    "name_fa": "اپیدوت (پسته‌ای‌رنگ)",
+    "name_en": "Epidote",
+    "category": "mineral",
+    "category_fa": "کانی سوروسیلیکات دگرگونی",
+    "category_en": "Sorosilicate Mineral",
+    "formula": "{Ca₂}{Al₂Fe³⁺}(Si₂O₇)(SiO₄)O(OH)",
+    "mohs_min": 6,
+    "mohs_max": 7,
+    "mohs_display": "6.0 - 7.0",
+    "sg_min": 3.3,
+    "sg_max": 3.5,
+    "sg_display": "3.30 - 3.50",
+    "crystal_system": "مونوکلینیک (بلورهای منشوری موازی)",
+    "cleavage": "کامل در یک جهت",
+    "fracture": "ناهموار تا صدفی ریز",
+    "luster": "شیشه‌ای تا صمغی",
+    "streak": "خاکستری مایل به سفید",
+    "streak_hex": "#e2e8f0",
+    "color_swatches": [
+      "#84cc16",
+      "#4d7c0f",
+      "#3f6212"
+    ],
+    "diagnostic": "رنگ سبز پسته‌ای منحصر به‌فرد، بلورهای طولی منشوری با خطوط شیاردار، تشکیل در زون‌های دگرگونی هیدروترمال.",
+    "locality": "اسکارن‌ها و رگه‌های دگرگونی هیدروترمال دره کوکچه بدخشان.",
+    "field_tests": [
+      "رنگ سبز پسته‌ای بارز، سختی ۶ تا ۷ (خراشیدن شیشه)"
+    ],
+    "primary_colors": [
+      "سبز پسته‌ای مشخص",
+      "سبز مایل به زرد"
+    ]
+  },
+  {
+    "id": "corundum",
+    "name_fa": "کراندوم (یاقوت سرخ و کبود)",
+    "name_en": "Corundum (Ruby & Sapphire)",
+    "category": "gemstone",
+    "category_fa": "سنگ قیمتی درجه‌یک",
+    "category_en": "Precious Gemstone",
+    "formula": "Al₂O₃",
+    "mohs_min": 9,
+    "mohs_max": 9,
+    "mohs_display": "9.0 (معیار موهس)",
+    "sg_min": 3.98,
+    "sg_max": 4.05,
+    "sg_display": "3.98 - 4.05",
+    "crystal_system": "تری‌گونال (بلورهای بشکه‌ای هگزاگونال)",
+    "cleavage": "فاقد رخ (جدایش لایه‌ای)",
+    "fracture": "صدفی تا ناهموار",
+    "luster": "الماسی تا شیشه‌ای درخشان",
+    "streak": "سفید (روی چینی اثر نمی‌گذارد)",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#b91c1c",
+      "#1d4ed8",
+      "#be185d"
+    ],
+    "diagnostic": "معیار سختی ۹ در جدول موهس (دومین کانی سخت طبیعی پس از الماس)، درخشش خیره‌کننده، چگالی بالا (~۴).",
+    "locality": "معادن باستانی یاقوت جگدلک (کابل/ننگرهار) و رگه‌های مرمر دگرگونی بدخشان و اشکاشم.",
+    "field_tests": [
+      "تست سختی ۹: توپاز (۸) و کوارتز (۷) را مثل موم می‌خراشد؛ فقط الماس آن را می‌خراشد",
+      "فلوئورسانس: یاقوت سرخ زیر UV قرمز نئونی خیره‌کننده می‌تابد"
+    ],
+    "primary_colors": [
+      "قرمز یاقوتی (روبی)",
+      "آبی سلطنتی (سفایر)",
+      "صورتی"
+    ]
+  },
+  {
+    "id": "aquamarine",
+    "name_fa": "آکوامارین (بریل آبی دریایی)",
+    "name_en": "Aquamarine (Blue Beryl)",
+    "category": "gemstone",
+    "category_fa": "سنگ قیمتی",
+    "category_en": "Precious Gemstone",
+    "formula": "Be₃Al₂Si₆O₁₈:Fe²⁺",
+    "mohs_min": 7.5,
+    "mohs_max": 8,
+    "mohs_display": "7.5 - 8.0",
+    "sg_min": 2.68,
+    "sg_max": 2.74,
+    "sg_display": "2.68 - 2.74",
+    "crystal_system": "هگزاگونال (منشورهای بلند شش‌ضلعی)",
+    "cleavage": "ناقص قاعده‌ای",
+    "fracture": "صدفی تا ناهموار",
+    "luster": "شیشه‌ای بسیار زلال",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#38bdf8",
+      "#0284c7",
+      "#7dd3fc"
+    ],
+    "diagnostic": "بلورهای منشوری شش‌ضلعی با انتهای تخت، شفافیت شیشه‌ای آبدار، سختی ۷.۵ تا ۸، رنگ آبی ملایم آهن دوظرفیتی.",
+    "locality": "پگماتیت‌های ولایت نورستان و پامیر در بدخشان؛ خاستگاه برخی از درشت‌ترین بلورهای موزه جهان.",
+    "field_tests": [
+      "سختی نزدیک ۸، خراشیدن آسان کوارتز، مقطع شش‌ضلعی منظم"
+    ],
+    "primary_colors": [
+      "آبی دریایی زلال",
+      "سبز آبی اقیانوسی"
+    ]
+  },
+  {
+    "id": "topaz",
+    "name_fa": "توپاز",
+    "name_en": "Topaz",
+    "category": "gemstone",
+    "category_fa": "سنگ قیمتی نسیلیکات",
+    "category_en": "Nesosilicate Gemstone",
+    "formula": "Al₂SiO₄(F,OH)₂",
+    "mohs_min": 8,
+    "mohs_max": 8,
+    "mohs_display": "8.0 (معیار موهس)",
+    "sg_min": 3.49,
+    "sg_max": 3.57,
+    "sg_display": "3.49 - 3.57",
+    "crystal_system": "ارتورومبیک (منشورهای هشت‌ضلعی با نوک هرمی)",
+    "cleavage": "بسیار کامل قاعده‌ای (در جهت {001})",
+    "fracture": "صدفی تا ناهموار",
+    "luster": "شیشه‌ای درخشان با جلای صیقلی لغزنده",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#eab308",
+      "#38bdf8",
+      "#f8fafc"
+    ],
+    "diagnostic": "معیار سختی ۸ جدول موهس، رخ قاعده‌ای کامل که باعث شکست مقطع تخت آینه‌ای می‌شود، لمس بسیار لغزنده در دست.",
+    "locality": "رگه‌های پگماتیتی و کوارتزی در بدخشان و مناطق کوهستانی کنر و نورستان.",
+    "field_tests": [
+      "سختی ۸: کوارتز (۷) را به سادگی خط می‌اندازد اما توسط کراندوم خط برمی‌دارد",
+      "رخ تخت: سطح شکست کاملاً آینه‌ای و عمود بر محور طولی"
+    ],
+    "primary_colors": [
+      "طلایی امپریال",
+      "آبی آسمانی",
+      "بی‌رنگ نقره‌ای"
+    ]
+  },
+  {
+    "id": "chrysocolla",
+    "name_fa": "کریسوکولا (سیلیکات مس فیروزه‌فام)",
+    "name_en": "Chrysocolla",
+    "category": "mineral",
+    "category_fa": "کانی سیلیکاته هیدراته مس",
+    "category_en": "Phyllosilicate Copper Mineral",
+    "formula": "Cu₂₋ₓAlₓ(H₂₋ₓSi₂O₅)(OH)₄·nH₂O",
+    "mohs_min": 2,
+    "mohs_max": 4,
+    "mohs_display": "2.0 - 4.0",
+    "sg_min": 2,
+    "sg_max": 2.4,
+    "sg_display": "2.00 - 2.40",
+    "crystal_system": "ارتورومبیک (توده‌ای، پوششی، بوتروئیدال)",
+    "cleavage": "ندارد",
+    "fracture": "صدفی شکننده",
+    "luster": "شیشه‌ای تا مومی و خاکی",
+    "streak": "سبز آبی کم‌رنگ",
+    "streak_hex": "#a7f3d0",
+    "color_swatches": [
+      "#06b6d4",
+      "#0d9488",
+      "#047857"
+    ],
+    "diagnostic": "رنگ فیروزه‌ای تند، چسبندگی خفیف به زبان خشک (تست چسبندگی زبان به دلیل تخلخل و آب ساختمانی).",
+    "locality": "زون‌های هوازدگی اکسیداسیون کانسنگ‌های مس در بدخشان و ولایت بلخ.",
+    "field_tests": [
+      "تست زبان: به زبان مرطوب چسبندگی ملایم نشان می‌دهد، نرمی ۲ تا ۴"
+    ],
+    "primary_colors": [
+      "آبی فیروزه‌ای پررنگ",
+      "سبز دریایی"
+    ]
+  },
+  {
+    "id": "native-gold",
+    "name_fa": "طلای طبیعی در کوارتز (طلای رگه‌ای)",
+    "name_en": "Native Gold in Quartz",
+    "category": "mineral",
+    "category_fa": "فلز بومی طبیعی / سنگ طلا",
+    "category_en": "Native Element in Hydrothermal Quartz",
+    "formula": "Au (همراه مقادیر جزئی Ag)",
+    "mohs_min": 2.5,
+    "mohs_max": 3,
+    "mohs_display": "2.5 - 3.0",
+    "sg_min": 15.6,
+    "sg_max": 19.3,
+    "sg_display": "15.6 - 19.3 (بسیار سنگین)",
+    "crystal_system": "ایزومتریک (رشته‌ای، ورقه‌ای، دندریتی)",
+    "cleavage": "ندارد",
+    "fracture": "دندانه‌دار و چکش‌خوار",
+    "luster": "فلزی طلایی بسیار گرم و درخشان",
+    "streak": "زرد طلایی درخشان متالیک",
+    "streak_hex": "#eab308",
+    "color_swatches": [
+      "#eab308",
+      "#ca8a04",
+      "#ffffff"
+    ],
+    "diagnostic": "چکش‌خواری فوق‌العاده (با ضربه چکش پهن می‌شود و هرگز پودر نمی‌شود)، چگالی خیره‌کننده (~۱۹)، عدم اکسیداسیون و حل نشدن در اسید.",
+    "locality": "معادن طلای رگه‌ای زرکشان و پلاسرهای طلای رودخانه‌ای نورابه و سمتی در تخار و حاشیه بدخشان با سابقه شستشوی سنتی.",
+    "field_tests": [
+      "تست چکش‌خواری: با نوک سوزن یا چاقو اثر عمیق فرورفتگی بر جای می‌ماند بدون آنکه ذره‌ای خرد شود",
+      "تست خاکه: خاکه زرد طلایی براق (برخلاف پیریت که سیاه می‌شود)",
+      "تست اسید: قطره اسید نیتریک هیچ اثری روی طلای خالص ندارد"
+    ],
+    "primary_colors": [
+      "زرد طلایی سیر",
+      "کوارتز سفید ماتریکس"
+    ]
+  },
+  {
+    "id": "cinnabar",
+    "name_fa": "سینابار (شنگرف / سولفید جیوه)",
+    "name_en": "Cinnabar",
+    "category": "mineral",
+    "category_fa": "کانی سولفیدی جیوه",
+    "category_en": "Mercury Sulfide Ore",
+    "formula": "HgS",
+    "mohs_min": 2,
+    "mohs_max": 2.5,
+    "mohs_display": "2.0 - 2.5",
+    "sg_min": 8.1,
+    "sg_max": 8.2,
+    "sg_display": "8.10 - 8.20",
+    "crystal_system": "تری‌گونال",
+    "cleavage": "کامل منشوری",
+    "fracture": "صدفی ریز تا ناهموار",
+    "luster": "الماسی تا مات خاکی",
+    "streak": "قرمز شنگرفی درخشان (سرخ آتشین)",
+    "streak_hex": "#dc2626",
+    "color_swatches": [
+      "#dc2626",
+      "#b91c1c",
+      "#7f1d1d"
+    ],
+    "diagnostic": "رنگ قرمز شنگرفی بسیار بارز، چگالی بسیار سنگین (>۸.۱)، خاکه سرخ روشن، سمیت به دلیل محتوای جیوه.",
+    "locality": "نهشته‌های اپی‌ترمال دگرسانی هیدروترمال در ولایت غور و رگه‌های بدخشان.",
+    "field_tests": [
+      "خاکه قرمز شنگرفی درخشان، وزن مخصوص فوق‌العاده سنگین"
+    ],
+    "primary_colors": [
+      "قرمز شنگرفی درخشان",
+      "سرخ خونی تیره"
+    ]
+  },
+  {
+    "id": "obsidian",
+    "name_fa": "ابسیدین (شیشه طبیعی آتشفشانی)",
+    "name_en": "Obsidian (Volcanic Glass)",
+    "category": "igneous",
+    "category_fa": "سنگ آذرین بیرونی شیشه‌ای",
+    "category_en": "Extrusive Volcanic Glass",
+    "formula": "SiO₂ (>70%) شیشه آمورف غنی از سیلیس",
+    "mohs_min": 5,
+    "mohs_max": 5.5,
+    "mohs_display": "5.0 - 5.5",
+    "sg_min": 2.35,
+    "sg_max": 2.6,
+    "sg_display": "2.35 - 2.60",
+    "crystal_system": "آمورف (بی‌شکل فاقد شبکه بلوری)",
+    "cleavage": "فاقد رخ (رخ ندارد)",
+    "fracture": "صدفی بسیار تیز و برنده مانند تیغ",
+    "luster": "شیشه‌ای درخشان قیرگون",
+    "streak": "سفید بی‌رنگ",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#09090b",
+      "#18181b",
+      "#27272a"
+    ],
+    "diagnostic": "شکستگی صدفی بسیار تیز با لبه‌های برنده در حد تیغ جراحی، ساختار کاملاً شیشه‌ای بدون دانه.",
+    "locality": "مراکز آتشفشانی کواترنری دشت ناوور غزنی و دره‌های آذرین بدخشان.",
+    "field_tests": [
+      "شکست صدفی بسیار تیز، لبه‌های شفاف در برابر نور، سختی ۵-۵.۵"
+    ],
+    "primary_colors": [
+      "سیاه براق قیرگون",
+      "دودی نیمه‌شفاف در لبه‌ها"
+    ]
+  },
+  {
+    "id": "granite",
+    "name_fa": "گرانیت (سنگ خارای آذرین درونی)",
+    "name_en": "Granite",
+    "category": "igneous",
+    "category_fa": "سنگ آذرین درونی فلسیک",
+    "category_en": "Felsic Intrusive Igneous Rock",
+    "formula": "مجموعه بلورین: کوارتز (SiO₂) + ارتوکلاز + پلاژیوکلاز + بیوتیت",
+    "mohs_min": 6,
+    "mohs_max": 7,
+    "mohs_display": "6.0 - 7.0",
+    "sg_min": 2.65,
+    "sg_max": 2.75,
+    "sg_display": "2.65 - 2.75",
+    "crystal_system": "فانریتیک (بافت دانه‌ای درشت بلورین درهم‌تنیده)",
+    "cleavage": "در سنگ ندارد (در کانی‌های مجزا رخ وجود دارد)",
+    "fracture": "ناهموار و دندانه‌دار بسیار سخت",
+    "luster": "متنوع شیشه‌ای-مرواریدی در کانی‌ها",
+    "streak": "سفید (از پودر سنگ)",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#cbd5e1",
+      "#fca5a5",
+      "#1e293b"
+    ],
+    "diagnostic": "بافت موزاییکی درهم‌تنیده بلورهای کوارتز شفاف، فلدسپار پتاسیک صورتی/کرم و بیوتیت یا هورنبلاند سیاه.",
+    "locality": "باتولیت‌های گرانیتی سترگ هندوکش و بدخشان که ستون فقرات کوهستانی منطقه را تشکیل می‌دهند.",
+    "field_tests": [
+      "بسیار سخت و مقاوم در برابر چکش، عدم واکنش به اسید، رؤیت دانه‌های کوارتز با ذره‌بین"
+    ],
+    "primary_colors": [
+      "دانه‌های سفید و خاکستری کوارتز",
+      "صورتی فلدسپار",
+      "دانه‌های سیاه بیوتیت"
+    ]
+  },
+  {
+    "id": "basalt",
+    "name_fa": "بازالت (سنگ آذرین بیرونی مافیک)",
+    "name_en": "Basalt",
+    "category": "igneous",
+    "category_fa": "سنگ آذرین بیرونی مافیک",
+    "category_en": "Mafic Extrusive Igneous Rock",
+    "formula": "پلاژیوکلاز کلسیک + پیروکسن (اوژیت) ± الیوین",
+    "mohs_min": 5.5,
+    "mohs_max": 6.5,
+    "mohs_display": "5.5 - 6.5",
+    "sg_min": 2.8,
+    "sg_max": 3,
+    "sg_display": "2.80 - 3.00",
+    "crystal_system": "آفانیتیک (ریزبلورین سریع‌سردشده ± حباب وزیکولار)",
+    "cleavage": "ندارد",
+    "fracture": "ناهموار تا صدفی ریز",
+    "luster": "مات، کدر",
+    "streak": "خاکستری تیره",
+    "streak_hex": "#475569",
+    "color_swatches": [
+      "#1e293b",
+      "#0f172a",
+      "#334155"
+    ],
+    "diagnostic": "رنگ تیره یکنواخت، بافت دانه‌ریز ناشی از انجماد سریع گدازه در سطح زمین، وجود گاه‌به‌گاه حفره‌های حباب گاز (وزیکول).",
+    "locality": "پهنه‌های گدازه‌ای باستانی و ستون‌های منشوری در بخش‌های دره‌ای بدخشان و فلات مرکزی.",
+    "field_tests": [
+      "بافت متراکم سنگین و تیره، سختی ۶ موهس، چگالی حدود ۳"
+    ],
+    "primary_colors": [
+      "خاکستری بسیار تیره",
+      "سیاه مات",
+      "حفره‌های گازی وزیکولار"
+    ]
+  },
+  {
+    "id": "gabbro",
+    "name_fa": "گابرو (آذرین درونی مافیک)",
+    "name_en": "Gabbro",
+    "category": "igneous",
+    "category_fa": "سنگ آذرین درونی مافیک",
+    "category_en": "Mafic Intrusive Igneous Rock",
+    "formula": "پلاژیوکلاز کلسیک + کلینوپیروکسن",
+    "mohs_min": 6,
+    "mohs_max": 6.5,
+    "mohs_display": "6.0 - 6.5",
+    "sg_min": 2.9,
+    "sg_max": 3.1,
+    "sg_display": "2.90 - 3.10",
+    "crystal_system": "فانریتیک درشت‌دانه",
+    "cleavage": "در تک‌بلورها وجود دارد",
+    "fracture": "ناهموار",
+    "luster": "مات تا شیشه‌ای در بلورها",
+    "streak": "خاکستری مایل به سفید",
+    "streak_hex": "#e2e8f0",
+    "color_swatches": [
+      "#0f172a",
+      "#14532d",
+      "#1e293b"
+    ],
+    "diagnostic": "معادل درونی بازالت؛ بلورهای درشت قابل مشاهده پیروکسن سیاه و فلدسپار تیره، فاقد کوارتز آزاد.",
+    "locality": "کمپلکس‌های افیولیتی پوسته اقیانوسی فسیل در درزهای تکتونیکی بدخشان.",
+    "field_tests": [
+      "بافت درشت تیره متراکم، فقدان کوارتز، سختی ۶"
+    ],
+    "primary_colors": [
+      "سیاه مایل به سبز تیره",
+      "دانه‌های خاکستری تیره فلدسپار"
+    ]
+  },
+  {
+    "id": "rhyolite",
+    "name_fa": "ریولیت (آذرین بیرونی فلسیک)",
+    "name_en": "Rhyolite",
+    "category": "igneous",
+    "category_fa": "سنگ آذرین بیرونی فلسیک",
+    "category_en": "Felsic Extrusive Igneous Rock",
+    "formula": "ماتریکس سیلیسی غنی از SiO₂ (>69%) با فنوکریست‌های کوارتز و فلدسپار",
+    "mohs_min": 6,
+    "mohs_max": 7,
+    "mohs_display": "6.0 - 7.0",
+    "sg_min": 2.4,
+    "sg_max": 2.6,
+    "sg_display": "2.40 - 2.60",
+    "crystal_system": "آفانیتیک با فنوکریست (پورفیریتیک)",
+    "cleavage": "ندارد",
+    "fracture": "صدفی تا ناهموار",
+    "luster": "مات، خاکی تا شیشه‌ای در دانه‌ها",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#fda4af",
+      "#fed7aa",
+      "#e2e8f0"
+    ],
+    "diagnostic": "معادل بیرونی سنگ گرانیت؛ رنگ روشن (صورتی یا نخودی) با زمینه دانه‌ریز و بلورهای درشت‌تر فنوکریست کوارتز.",
+    "locality": "توف‌ها و روانه‌های گدازه‌ای ریولیتی در توالی‌های آتشفشانی بدخشان.",
+    "field_tests": [
+      "رنگ روشن فلسیک، سختی بالا (خراشیدن شیشه)، چگالی نسبتاً سبک"
+    ],
+    "primary_colors": [
+      "صورتی روشن",
+      "کرمی نخودی",
+      "خاکستری روشن"
+    ]
+  },
+  {
+    "id": "diorite",
+    "name_fa": "دیوریت (سنگ نمک و فلفلی)",
+    "name_en": "Diorite (\"Salt & Pepper\" Rock)",
+    "category": "igneous",
+    "category_fa": "سنگ آذرین درونی حدواسط",
+    "category_en": "Intermediate Intrusive Igneous Rock",
+    "formula": "پلاژیوکلاز سدیم-کلسیم + هورنبلاند / بیوتیت",
+    "mohs_min": 6,
+    "mohs_max": 6.5,
+    "mohs_display": "6.0 - 6.5",
+    "sg_min": 2.8,
+    "sg_max": 3,
+    "sg_display": "2.80 - 3.00",
+    "crystal_system": "فانریتیک دانه‌ای هم‌اندازه",
+    "cleavage": "ندارد",
+    "fracture": "ناهموار و بسیار چقرمه",
+    "luster": "شیشه‌ای در دانه‌ها",
+    "streak": "سفید مایل به خاکستری",
+    "streak_hex": "#cbd5e1",
+    "color_swatches": [
+      "#f8fafc",
+      "#18181b",
+      "#64748b"
+    ],
+    "diagnostic": "کنتراست شدید سیاه و سفید همگن (بافت معروف نمک و فلفل)، غیبت کوارتز آزاد یا مقدار ناچیز آن (<۵٪).",
+    "locality": "پلوتون‌های دیوریتی در کوهستان‌های پامیر و بدخشان.",
+    "field_tests": [
+      "بافت نمک و فلفلی مشخص، سختی ۶ موهس"
+    ],
+    "primary_colors": [
+      "بافت خال‌خال نمک و فلفلی",
+      "دانه‌های سفید پلاژیوکلاز و سیاه هورنبلاند"
+    ]
+  },
+  {
+    "id": "sandstone",
+    "name_fa": "ماسه‌سنگ (سنگ رسوبی آواری)",
+    "name_en": "Sandstone",
+    "category": "sedimentary",
+    "category_fa": "سنگ رسوبی آواری",
+    "category_en": "Clastic Sedimentary Rock",
+    "formula": "دانه‌های آواری کوارتز (SiO₂) + سیمان سیلیسی/کلسایتی/رسی",
+    "mohs_min": 6,
+    "mohs_max": 7,
+    "mohs_display": "6.0 - 7.0 (دانه‌ها)",
+    "sg_min": 2.2,
+    "sg_max": 2.8,
+    "sg_display": "2.20 - 2.80",
+    "crystal_system": "آواری دانه‌ای (سایز ماسه ۰.۰۶۲۵ تا ۲ میلی‌متر)",
+    "cleavage": "ندارد",
+    "fracture": "ناهموار مانند سنباده زبر",
+    "luster": "مات، خاکی",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#d97706",
+      "#b45309",
+      "#fef3c7"
+    ],
+    "diagnostic": "بافت لمسی کاملاً شبیه کاغذ سنباده زبر، لایه‌بندی رسوبی افقی یا مورب، متخلخل بودن.",
+    "locality": "سازندهای رسوبی کرتاسه و ژوراسیک در کوهپایه‌های بدخشان و تخار.",
+    "field_tests": [
+      "حس لامسه: لمس دانه‌های زبر سنباده با مالش انگشت",
+      "تست تخلخل: قطره آب به سرعت در حفرات آن جذب می‌شود"
+    ],
+    "primary_colors": [
+      "زرد خردلی نخودی",
+      "قهوه‌ای اخرایی",
+      "خاکستری روشن"
+    ]
+  },
+  {
+    "id": "limestone",
+    "name_fa": "سنگ آهک (سنگ رسوبی کربناته)",
+    "name_en": "Limestone",
+    "category": "sedimentary",
+    "category_fa": "سنگ رسوبی بیوشیمیایی کربناته",
+    "category_en": "Carbonate Sedimentary Rock",
+    "formula": "عمدتاً کلسیت CaCO₃",
+    "mohs_min": 3,
+    "mohs_max": 3.5,
+    "mohs_display": "3.0 - 3.5",
+    "sg_min": 2.3,
+    "sg_max": 2.7,
+    "sg_display": "2.30 - 2.70",
+    "crystal_system": "ریزبلورین تا فسیل‌دار",
+    "cleavage": "در سنگ ندارد",
+    "fracture": "صدفی ریز تا خاکی",
+    "luster": "مات، خاکی",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#cbd5e1",
+      "#f1f5f9",
+      "#d1d5db"
+    ],
+    "diagnostic": "جوشش سریع و فعال با اسید رقیق سرد، سختی ۳ (خراشیدن با چاقو و سکه مس)، وجود فسیل‌های دریایی در بسیاری از نمونه‌ها.",
+    "locality": "پهنه‌های آهکی کوه‌های پامیر و بدخشان که میزبان غارهای کارستی و چشمه‌های طبیعی هستند.",
+    "field_tests": [
+      "تست اسید: واکنش جوشان شدید با قطره اسید هیدروکلریک",
+      "تست سختی ۳: چاقو به راحتی پودر سفیدی از روی آن می‌تراشد"
+    ],
+    "primary_colors": [
+      "خاکستری روشن",
+      "کرم شیری",
+      "نخودی"
+    ]
+  },
+  {
+    "id": "marble",
+    "name_fa": "سنگ مرمر / مرمریت (کربناته دگرگونی)",
+    "name_en": "Marble",
+    "category": "metamorphic",
+    "category_fa": "سنگ دگرگونی کربناته تبلورمجدد",
+    "category_en": "Recrystallized Metamorphic Carbonate",
+    "formula": "کلسیت تبلورمجدد یافته CaCO₃ ± دولومیت",
+    "mohs_min": 3,
+    "mohs_max": 4,
+    "mohs_display": "3.0 - 4.0",
+    "sg_min": 2.6,
+    "sg_max": 2.86,
+    "sg_display": "2.60 - 2.86",
+    "crystal_system": "گرانوبلاستیک (دانه‌ای شکری درهم‌قفل‌شده)",
+    "cleavage": "رخ کلسیت در بلورهای مجزا مشهود است",
+    "fracture": "دانه‌ای تا نامنظم",
+    "luster": "شیشه‌ای تا مرواریدی و صیقلی ابریشمی",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#ffffff",
+      "#f8fafc",
+      "#e2e8f0",
+      "#bbf7d0"
+    ],
+    "diagnostic": "بافت دانه‌ای شکری بلورهای کلسیت بازتبلور یافته، درخشش صیقلی چشم‌نواز، جوشش با اسید در پودر سنگ.",
+    "locality": "مرمرهای سرسنگ بدخشان میزبان لاجورد؛ همچنین مرمرهای سفید اعلای چشت شریف هرات و مرمر سبز اونیکس هلمند.",
+    "field_tests": [
+      "تست اسید: قطره اسید هیدروکلریک روی سطح واکنش جوشان نشان می‌دهد",
+      "تست نور: ورقه‌های مرمر نازک نور را از خود عبور می‌دهند"
+    ],
+    "primary_colors": [
+      "سفید برفی شکری",
+      "رگه‌دار خاکستری",
+      "سبز رخام اونیکس"
+    ]
+  },
+  {
+    "id": "schist",
+    "name_fa": "شیست (سنگ دگرگونی شیستوز ورقه‌ای)",
+    "name_en": "Schist (Mica Schist)",
+    "category": "metamorphic",
+    "category_fa": "سنگ دگرگونی ورقه‌ای متوسط‌درجه",
+    "category_en": "Foliated Metamorphic Rock",
+    "formula": "میکا (مسکوویت/بیوتیت) + کوارتز ± پورفیروبلاست گارنت",
+    "mohs_min": 4,
+    "mohs_max": 6,
+    "mohs_display": "4.0 - 6.0",
+    "sg_min": 2.7,
+    "sg_max": 2.9,
+    "sg_display": "2.70 - 2.90",
+    "crystal_system": "شیستوزیته (ورقه‌ای فشرده پولکی موازی)",
+    "cleavage": "جدایش آسان در امتداد سطوح شیستوزیته",
+    "fracture": "ورقه‌ورقه نامنظم",
+    "luster": "ابریشمی براق تا متالیک درخشان پولک‌های میکا",
+    "streak": "سفید مایل به خاکستری",
+    "streak_hex": "#cbd5e1",
+    "color_swatches": [
+      "#cbd5e1",
+      "#94a3b8",
+      "#881337"
+    ],
+    "diagnostic": "شیمر و درخشش فوق‌العاده پولک‌های موازی میکا در نور خورشید، قابلیت ورقه شدن، اغلب حامل بلورهای سرخ کروی گارنت.",
+    "locality": "بخش عظیمی از کمربند کوهستانی بدخشان، پنجشیر و دره‌های سالنگ.",
+    "field_tests": [
+      "درخشش نقره‌ای یا برنزی زیر نور آفتاب، ورقه شدن آسان با نوک چاقو"
+    ],
+    "primary_colors": [
+      "نقره‌ای درخشان براق",
+      "خاکستری تیره با دانه‌های قرمز گارنت"
+    ]
+  },
+  {
+    "id": "gneiss",
+    "name_fa": "گنیس (سنگ دگرگونی نواری شدید)",
+    "name_en": "Gneiss",
+    "category": "metamorphic",
+    "category_fa": "سنگ دگرگونی نواری عالی‌درجه",
+    "category_en": "High-grade Foliated Metamorphic Rock",
+    "formula": "باندهای نواری کوارتز و فلدسپار متناوب با نوارهای سیاه بیوتیت و آمفیبول",
+    "mohs_min": 6,
+    "mohs_max": 7,
+    "mohs_display": "6.0 - 7.0",
+    "sg_min": 2.6,
+    "sg_max": 2.9,
+    "sg_display": "2.60 - 2.90",
+    "crystal_system": "باندینگ گنیسی (نوارهای موازی تیره و روشن)",
+    "cleavage": "ندارد",
+    "fracture": "ناهموار و بسیار سخت",
+    "luster": "شیشه‌ای تا مات در باندها",
+    "streak": "سفید",
+    "streak_hex": "#ffffff",
+    "color_swatches": [
+      "#f8fafc",
+      "#1e293b",
+      "#fca5a5"
+    ],
+    "diagnostic": "نواربندی مشخص گنیسی متناوب میان لایه‌های روشن سیلیسی و لایه‌های تیره مافیک بدون ورقه شدن آسان (تفاوت با شیست).",
+    "locality": "پی‌سنگ‌های دگرگونی باستانی پروتروزوئیک بدخشان و کوه‌های واخان و پامیر.",
+    "field_tests": [
+      "نوارهای موازی موج‌دار، سختی بسیار بالا، مقاومت مکانیکی شدید"
+    ],
+    "primary_colors": [
+      "نوارهای سفید و صورتی کوارتز و فلدسپار",
+      "نوارهای سیاه موج‌دار بیوتیت"
+    ]
+  }
+];
+    window.CATALOG_MAP = new Map(window.GEOLOGY_CATALOG.map(item => [item.id, item]));
+  </script>
+
+  <!-- Main Pipeline Execution, Transformers.js CLIP, & Computer Vision Engine -->
+  <script type="module">
+    // DOM Elements
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const cameraInput = document.getElementById('camera-input');
+    const btnSelectFile = document.getElementById('btn-select-file');
+    const btnCamera = document.getElementById('btn-camera');
+    const btnChangeImage = document.getElementById('btn-change-image');
+    const btnResetScan = document.getElementById('btn-reset-scan');
+    const previewWrapper = document.getElementById('preview-wrapper');
+    const imagePreview = document.getElementById('image-preview');
+    const resultsSection = document.getElementById('results-section');
+    const modelDot = document.getElementById('model-dot');
+    const modelStatusText = document.getElementById('model-status-text');
+    const btnLoadClip = document.getElementById('btn-load-clip');
+    const modelProgressBox = document.getElementById('model-progress-box');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressStatusText = document.getElementById('progress-status-text');
+    const progressDetailText = document.getElementById('progress-detail-text');
+    const activeEngineTitle = document.getElementById('active-engine-title');
+    const activeEngineDesc = document.getElementById('active-engine-desc');
+    const historyList = document.getElementById('history-list');
+    const historyCount = document.getElementById('history-count');
+    const btnClearHistory = document.getElementById('btn-clear-history');
+    const btnOpenCatalog = document.getElementById('btn-open-catalog');
+    const catalogModal = document.getElementById('catalog-modal');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const catalogSearch = document.getElementById('catalog-search');
+    const catalogGridContainer = document.getElementById('catalog-grid-container');
+    const catalogCountBadge = document.getElementById('catalog-count-badge');
+
+    // State
+    let currentImageSrc = null;
+    let currentDemoId = null;
+    let localHistory = JSON.parse(localStorage.getItem('maimi_rock_history') || '[]');
+    let clipPipeline = null;
+    let isClipLoading = false;
+    let clipModelStatus = 'idle'; // idle | loading | ready | failed
+    let currentScanToken = 0; // Prevent stale async results from replacing newer images.
+
+    updateHistoryUI();
+    renderCatalogGrid(window.GEOLOGY_CATALOG);
+    // Attempt to activate real image-model inference automatically. This requires internet on first use.
+    initTransformersClipModel();
+
+    // Event Listeners for Upload & Interactions
+    btnSelectFile.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+    btnCamera.addEventListener('click', (e) => { e.stopPropagation(); cameraInput.click(); });
+    btnChangeImage.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+    btnResetScan.addEventListener('click', resetView);
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) handleUserFile(e.target.files[0]);
+    });
+    cameraInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) handleUserFile(e.target.files[0]);
+    });
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleUserFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    // Sample Pills Clicking
+    document.querySelectorAll('.sample-pill').forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const rockId = pill.getAttribute('data-id');
+        const mineral = window.CATALOG_MAP.get(rockId);
+        if (mineral) {
+          // Generate a representative synthetic test canvas for the specimen to simulate real image processing
+          createSyntheticSpecimenImage(mineral, (dataUrl) => {
+            currentImageSrc = dataUrl;
+            currentDemoId = mineral.id;
+            imagePreview.src = dataUrl;
+            previewWrapper.style.display = 'block';
+            analyzeImage(dataUrl, mineral.id);
+          });
+        }
+      });
+    });
+
+    // Modal Events
+    btnOpenCatalog.addEventListener('click', () => { catalogModal.style.display = 'flex'; });
+    btnCloseModal.addEventListener('click', () => { catalogModal.style.display = 'none'; });
+    catalogModal.addEventListener('click', (e) => {
+      if (e.target === catalogModal) catalogModal.style.display = 'none';
+    });
+    catalogSearch.addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = window.GEOLOGY_CATALOG.filter(item => 
+        item.name_fa.toLowerCase().includes(q) ||
+        item.name_en.toLowerCase().includes(q) ||
+        item.formula.toLowerCase().includes(q) ||
+        item.id.toLowerCase().includes(q) ||
+        item.diagnostic.toLowerCase().includes(q) ||
+        item.locality.toLowerCase().includes(q)
+      );
+      renderCatalogGrid(filtered);
+    });
+
+    btnClearHistory.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('آیا تاریخچه اسکن‌ها پاک شود؟')) {
+        localHistory = [];
+        localStorage.removeItem('maimi_rock_history');
+        updateHistoryUI();
+      }
+    });
+
+    btnLoadClip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      initTransformersClipModel();
+    });
+
+    function resetView() {
+      currentScanToken++;
+      currentDemoId = null;
+      currentImageSrc = null;
+      previewWrapper.style.display = 'none';
+      resultsSection.style.display = 'none';
+      dropZone.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Process User File
+    function handleUserFile(file) {
+      const scanToken = ++currentScanToken;
+      resultsSection.style.display = 'none';
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size <= 0 || file.size > 8 * 1024 * 1024) {
+        alert('لطفاً یک فایل تصویری معتبر (JPG, PNG, WebP) انتخاب فرمایید.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (scanToken !== currentScanToken) return;
+        const dataUrl = e.target.result;
+        currentImageSrc = dataUrl;
+        currentDemoId = null;
+        imagePreview.src = dataUrl;
+        previewWrapper.style.display = 'block';
+
+        analyzeImage(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Dynamic Transformers.js CLIP Model Loader
+    async function initTransformersClipModel() {
+      if (clipPipeline) {
+        alert('مدل Transformers.js CLIP پیش‌تر با موفقیت بارگذاری شده و آماده است.');
+        return;
+      }
+      if (isClipLoading) return;
+
+      isClipLoading = true;
+      clipModelStatus = 'loading';
+      modelProgressBox.style.display = 'block';
+      progressBarFill.style.width = '10%';
+      progressPercent.textContent = '۱۰٪';
+      progressStatusText.textContent = 'در حال اتصال به CDN و راه‌اندازی شبیه‌ساز ONNX Runtime...';
+      modelDot.className = 'status-dot loading';
+      modelStatusText.textContent = 'در حال دریافت مدل CLIP...';
+      btnLoadClip.disabled = true;
+      btnLoadClip.textContent = '⏳ در حال دریافت مدل...';
+
+      try {
+        // Dynamically import @xenova/transformers
+        const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+
+        progressStatusText.textContent = 'در حال بارگیری وزن‌های مدل هوش مصنوعی (Xenova/clip-vit-base-patch32)...';
+        progressBarFill.style.width = '35%';
+        progressPercent.textContent = '۳۵٪';
+
+        clipPipeline = await pipeline('zero-shot-image-classification', 'Xenova/clip-vit-base-patch32', {
+          progress_callback: (progress) => {
+            if (progress.status === 'progress' && progress.total) {
+              const pct = Math.round((progress.loaded / progress.total) * 100);
+              progressBarFill.style.width = pct + '%';
+              progressPercent.textContent = pct + '%';
+              const mbLoaded = (progress.loaded / 1048576).toFixed(1);
+              const mbTotal = (progress.total / 1048576).toFixed(1);
+              progressDetailText.textContent = `دریافت شده: ${mbLoaded}MB از ${mbTotal}MB`;
+            } else if (progress.status === 'done') {
+              progressStatusText.textContent = 'بارگیری فایل مدل به اتمام رسید. در حال مقداردهی اولیه گراف عصبی...';
+            }
+          }
+        });
+
+        clipModelStatus = 'ready';
+        isClipLoading = false;
+        progressBarFill.style.width = '100%';
+        progressPercent.textContent = '۱۰۰٪';
+        progressStatusText.textContent = 'مدل Transformers.js CLIP با موفقیت بارگذاری شد.';
+        modelDot.className = 'status-dot purple';
+        modelStatusText.textContent = 'مدل عمیق CLIP آماده است';
+        activeEngineTitle.textContent = 'مدل عمومی CLIP (فعال؛ غیرتخصصی)';
+        activeEngineDesc.textContent = 'استخراج بازنمایی تصویری صفر-نمونه (Zero-Shot) در فضای برداری مشترک با کاتالوگ ۵۱ مرجع';
+        btnLoadClip.textContent = '✅ مدل CLIP فعال است';
+
+        // Re-analyze current image if present
+        if (currentImageSrc) {
+          analyzeImage(currentImageSrc, currentDemoId);
+        }
+
+      } catch (err) {
+        console.warn('Transformers.js CLIP could not be loaded:', err);
+        isClipLoading = false;
+        clipModelStatus = 'failed';
+        modelDot.className = 'status-dot';
+        modelStatusText.textContent = 'مدل CLIP (نیازمند دانلود اولیه)';
+        progressStatusText.textContent = 'مدل CLIP آماده نیست؛ برای جلوگیری از تشخیص غلط، نام سنگ نشان داده نمی‌شود.';
+        progressDetailText.textContent = 'خطا: ' + (err.message || 'شبکه یا حافظه مرورگر؛ دوباره تلاش کنید.');
+        btnLoadClip.disabled = false;
+        btnLoadClip.textContent = '🔄 تلاش مجدد بارگیری CLIP';
+      }
+    }
+
+    // Main Analysis Entry Point: ONLY a real image model may propose mineral names.
+    async function analyzeImage(dataUrl, forcedSpecimenId = null) {
+      const scanToken = ++currentScanToken;
+      extractSpectralFeatures(dataUrl, async (features) => {
+        if (scanToken !== currentScanToken) return;
+        if (forcedSpecimenId && window.CATALOG_MAP.has(forcedSpecimenId)) {
+          const demoMineral = window.CATALOG_MAP.get(forcedSpecimenId);
+          renderResults({ primary: demoMineral, primaryScore: null,
+            confidence: 'نمایش آموزشی کاتالوگ؛ نه شناسایی مدل', alternatives: [] },
+            features, 'نمایش آموزشی (بدون تحلیل)', scanToken);
+          return;
+        }
+        if (features.isLowContrast) {
+          resultsSection.style.display = 'none';
+          alert('تصویر تقریباً یکنواخت یا بدون جزئیات کافی است. لطفاً عکس واضح‌تری از یک سنگ بگیرید.');
+          return;
+        }
+        if (!clipPipeline || clipModelStatus !== 'ready') {
+          resultsSection.style.display = 'none';
+          modelProgressBox.style.display = 'block';
+          progressStatusText.textContent = 'برای تشخیص واقعی باید مدل CLIP به‌طور کامل بارگذاری شود. هیچ نتیجهٔ رنگی به جای تشخیص ارائه نمی‌شود.';
+          if (!isClipLoading) initTransformersClipModel();
+          return;
+        }
+        try {
+          const result = await runClipClassification(dataUrl, features);
+          if (scanToken !== currentScanToken) return;
+          renderResults(result, features, 'مدل عمومی CLIP؛ رتبه‌بندی تصویری بدون کالیبراسیون', scanToken);
+        } catch (err) {
+          console.warn('CLIP image inference failed:', err);
+          if (scanToken !== currentScanToken) return;
+          resultsSection.style.display = 'none';
+          alert('مدل نتوانست تصویر را تحلیل کند: ' + String(err.message || err));
+        }
+      });
+    }
+
+    // Engine A: Transformers.js CLIP Zero-Shot Classification
+    async function runClipClassification(dataUrl, features) {
+      const catalog = window.GEOLOGY_CATALOG;
+      const prompts = catalog.map(m => `a close-up photograph of a natural geological hand specimen of ${m.name_en}`);
+      const rejectionPrompts = [
+        'a photograph of a human face or a person',
+        'a photograph of a vehicle, household object or electronic device',
+        'an illustration, logo, graphic or blank flat background',
+        'a photograph of food, animals or plants rather than a rock specimen'
+      ];
+      const candidateLabels = [...prompts, ...rejectionPrompts];
+      // The pipeline compares THIS uploaded image with all 51 geological labels.
+      const output = await clipPipeline(dataUrl, candidateLabels, {hypothesis_template: '{}', topk: candidateLabels.length});
+      if (!Array.isArray(output) || !output.length) throw new Error('CLIP returned no results');
+      const ranked = output.map(item => {
+        const index = candidateLabels.indexOf(item.label);
+        return { index, rawScore: item.score, mineral: catalog[index] };
+      }).filter(item => item.index >= 0 && Number.isFinite(item.rawScore));
+      ranked.sort((a,b)=>b.rawScore-a.rawScore);
+      if (!ranked.length) throw new Error('CLIP returned invalid candidate scores');
+      if (ranked[0].index >= catalog.length) {
+        throw new Error('تصویر احتمالاً نمونه سنگ نیست، یا CLIP قادر به تشخیص مطمئن نوع عکس نیست.');
+      }
+      const minerals = ranked.filter(item => item.mineral);
+      return {
+        primary: minerals[0].mineral,
+        primaryScore: null,
+        confidence: 'رتبه‌بندی CLIP؛ نه فیصدی دقت علمی، نه تشخیص قطعی',
+        alternatives: minerals.slice(1,5).map(item=>({mineral:item.mineral,score:null}))
+      };
+    }
+
+    // Extract real computer vision spectral & texture features via HTML5 Canvas
+    function extractSpectralFeatures(dataUrl, callback) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 320;
+        let w = img.width;
+        let h = img.height;
+        if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else { w = Math.round((w * maxDim) / h); h = maxDim; }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const d = imgData.data;
+        let rSum = 0, gSum = 0, bSum = 0, count = 0;
+        let goldSpecks = 0;
+        let whitePixels = 0;
+        let luminanceValues = [];
+
+        for (let i = 0; i < d.length; i += 16) {
+          const r = d[i], g = d[i+1], b = d[i+2];
+          rSum += r; gSum += g; bSum += b; count++;
+
+          const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          luminanceValues.push(lum);
+
+          // Specular metallic brassy golden highlights detector (Pyrite / Native Gold)
+          if (r > 165 && g > 135 && b < 105 && (r - b) > 50) {
+            goldSpecks++;
+          }
+          // White streaks / Calcite matrix
+          if (r > 205 && g > 205 && b > 205) {
+            whitePixels++;
+          }
+        }
+
+        const avgR = Math.round(rSum / count);
+        const avgG = Math.round(gSum / count);
+        const avgB = Math.round(bSum / count);
+        const brightness = (avgR * 0.299 + avgG * 0.587 + avgB * 0.114) / 255;
+
+        // Compute variance of luminance for texture / heterogeneity
+        const meanLum = brightness * 255;
+        let varianceSum = 0;
+        for (const l of luminanceValues) {
+          varianceSum += Math.pow(l - meanLum, 2);
+        }
+        const stdDev = Math.sqrt(varianceSum / luminanceValues.length);
+        const isLowContrast = stdDev < 8; // Blank or flat solid color image
+
+        let dominantHue = 'blue';
+        if (brightness < 0.22) dominantHue = 'black_dark';
+        else if (brightness > 0.82) dominantHue = 'white_light';
+        else if (avgB > avgR && avgB > avgG) dominantHue = 'blue';
+        else if (avgG > avgR && avgG > avgB) dominantHue = 'green';
+        else if (avgR > 140 && avgG > 110 && avgB < 100) dominantHue = 'yellow_gold';
+        else if (avgR > avgG && avgR > avgB) dominantHue = 'red_pink';
+
+        const hexColor = rgbToHex(avgR, avgG, avgB);
+
+        callback({
+          dominantHue,
+          hasGold: goldSpecks > 6,
+          hasVeining: whitePixels > (count * 0.08),
+          brightness: Math.round(brightness * 100),
+          isLowContrast,
+          avgR, avgG, avgB,
+          hexColor
+        });
+      };
+      img.src = dataUrl;
+    }
+
+    // Render Results View
+    function renderResults(res, features, engineUsed, scanToken, selectedIndex = 0, recordHistory = true) {
+      if (scanToken !== currentScanToken) return;
+      // The candidate object and EVERY reference field come from the SAME result
+      // of THIS uploaded image. Selecting an alternative changes all details.
+      const candidates = [
+        { mineral: res.primary, score: res.primaryScore },
+        ...(Array.isArray(res.alternatives) ? res.alternatives : [])
+      ].filter(item => item && item.mineral);
+      if (!candidates.length) return;
+      const choice = Math.max(0, Math.min(selectedIndex, candidates.length - 1));
+      const primary = candidates[choice].mineral;
+
+      document.getElementById('res-name-fa').textContent = primary.name_fa;
+      document.getElementById('res-name-en').textContent = primary.name_en;
+      document.getElementById('res-category').textContent = primary.category_fa;
+      document.getElementById('res-score').textContent = `نامزد رتبهٔ ${choice + 1} از ${candidates.length}`;
+      document.getElementById('res-confidence').textContent = res.confidence + ' • مشخصات مربوط به ' + primary.name_fa;
+      document.getElementById('res-engine-tag').textContent = engineUsed;
+
+      // Demarcation 1: Image-Extracted Features
+      document.getElementById('feat-color-chip').style.backgroundColor = features.hexColor;
+      document.getElementById('feat-color-text').textContent = `${getHueNameFa(features.dominantHue)} (${features.hexColor})`;
+      document.getElementById('feat-gold-specks').textContent = features.hasGold 
+        ? 'لکه‌های زرد در پیکسل‌ها (نوع منرال معلوم نیست)' 
+        : 'لکه‌های زرد شاخص ثبت نشد؛ نتیجه غیرقطعی است';
+      document.getElementById('feat-gold-specks').style.color = features.hasGold ? '#fbbf24' : '#cbd5e1';
+
+      document.getElementById('feat-veining').textContent = features.hasVeining
+        ? 'نواحی روشن ثبت شد؛ ترکیب منرالی نامعلوم است'
+        : 'نواحی روشن قابل توجه ثبت نشد؛ رخ و رگه بررسی نشده‌اند';
+      document.getElementById('feat-veining').style.color = features.hasVeining ? '#93c5fd' : '#cbd5e1';
+
+      document.getElementById('feat-brightness').textContent = `روشنایی: ${features.brightness}٪ • بافت: ${features.isLowContrast ? 'یکنواخت (کنتراست پایین)' : 'تغییرات روشنایی (نه اثبات بلورین‌بودن)'}`;
+
+      // Demarcation 2: Database-Retrieved Specifications
+      document.getElementById('res-formula').textContent = primary.formula;
+      document.getElementById('res-mohs').textContent = primary.mohs_display;
+      document.getElementById('res-sg').textContent = primary.sg_display + ' g/cm³';
+      document.getElementById('res-crystal').textContent = primary.crystal_system;
+      document.getElementById('res-cleavage').textContent = `${primary.cleavage} • ${primary.fracture}`;
+      document.getElementById('res-luster').textContent = primary.luster || 'نامشخص';
+      document.getElementById('res-next-test').textContent = (primary.field_tests || [])[0] || 'آزمایش تکمیلی انتخاب نشده';
+      document.getElementById('res-interpretation').textContent = `مدل تصویری این عکس را با نامزد «${primary.name_fa}» در رتبهٔ ${choice + 1} از ${candidates.length} مقایسه کرده است. توضیحات رخ، جلا و منشا، مقادیر مرجع همین نامزد هستند؛ از خود عکس اثبات نشده‌اند.`;
+      document.getElementById('res-streak').textContent = primary.streak;
+      document.getElementById('res-streak-chip').style.backgroundColor = primary.streak_hex;
+      document.getElementById('res-locality').textContent = primary.locality;
+      document.getElementById('res-diagnostic').textContent = primary.diagnostic;
+
+      // Diagnostic field tests
+      const fieldTestContainer = document.getElementById('res-field-tests');
+      fieldTestContainer.innerHTML = '';
+      if (primary.field_tests && primary.field_tests.length > 0) {
+        primary.field_tests.forEach(test => {
+          const div = document.createElement('div');
+          div.className = 'field-test-item';
+          div.innerHTML = `<span style="color: #fbbf24;">🔹</span><span>${test}</span>`;
+          fieldTestContainer.appendChild(div);
+        });
+      } else {
+        fieldTestContainer.innerHTML = '<div>آزمایش‌های تکمیلی سختی و اسید ثبت گردیده است.</div>';
+      }
+
+      // Render every *other* candidate; clicking switches every detail panel,
+      // while observations from the unchanged photo correctly stay unchanged.
+      const altContainer = document.getElementById('alternatives-container');
+      altContainer.replaceChildren();
+      candidates.forEach((item, idx) => {
+        if (idx === choice) return;
+        const m = item.mineral;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'alt-item';
+        button.style.width = '100%';
+        button.style.cursor = 'pointer';
+        button.style.textAlign = 'start';
+        button.style.fontFamily = 'inherit';
+        button.title = 'نمایش تمام مشخصات علمی و آزمون‌های همین نامزد';
+        const left = document.createElement('span');
+        left.style.display = 'flex';
+        left.style.alignItems = 'center';
+        const rank = document.createElement('span');
+        rank.className = 'alt-item-rank';
+        rank.textContent = '#' + (idx + 1);
+        const labels = document.createElement('span');
+        const name = document.createElement('strong');
+        name.style.display = 'block';
+        name.style.color = '#f1f5f9';
+        name.textContent = m.name_fa;
+        const details = document.createElement('span');
+        details.style.color = '#94a3b8';
+        details.style.fontSize = '0.75rem';
+        details.textContent = `${m.name_en} • ${m.category_fa}`;
+        labels.append(name, details);
+        left.append(rank, labels);
+        const callToAction = document.createElement('span');
+        callToAction.className = 'alt-score';
+        callToAction.textContent = 'نمایش گزارش کامل';
+        button.append(left, callToAction);
+        button.addEventListener('click', () => {
+          if (scanToken !== currentScanToken) return;
+          renderResults(res, features, engineUsed, scanToken, idx, false);
+        });
+        altContainer.appendChild(button);
+      });
+
+      // Display the selected full report for this scan only.
+      resultsSection.style.display = 'block';
+      if (recordHistory) {
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+        saveHistoryEntry(res.primary.name_fa, res.primaryScore, engineUsed);
+      }
+
+    }
+
+    // Save and render history in localStorage
+    function saveHistoryEntry(name, score, engine) {
+      const entry = {
+        name,
+        score,
+        engine: engine.includes('CLIP') ? 'CLIP' : 'Spectral CV',
+        time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
+      };
+      localHistory.unshift(entry);
+      if (localHistory.length > 25) localHistory.pop();
+      localStorage.setItem('maimi_rock_history', JSON.stringify(localHistory));
+      updateHistoryUI();
+    }
+
+    function updateHistoryUI() {
+      historyCount.textContent = localHistory.length;
+      if (localHistory.length === 0) {
+        historyList.innerHTML = '<div style="color: #64748b; font-size: 0.78rem; text-align: center; padding: 1rem;">هنوز سابقه تشخیصی در این مرورگر ثبت نشده است.</div>';
+        return;
+      }
+      historyList.innerHTML = localHistory.map(item => `
+        <div class="history-entry">
+          <div>
+            <strong style="color: #e2e8f0;">${item.name}</strong>
+            <span style="color: #64748b; font-size: 0.72rem; margin-right: 0.4rem;">(${item.engine || 'CV'}) • ${item.time}</span>
+          </div>
+          <span style="color: #fbbf24; font-family: var(--font-mono); font-weight: 700;">مقدماتی</span>
+        </div>
+      `).join('');
+    }
+
+    // 51 Catalog Modal Grid Renderer
+    function renderCatalogGrid(items) {
+      catalogCountBadge.textContent = `نمایش ${items.length} از ${window.GEOLOGY_CATALOG.length} مدخل کاتالوگ مرجع زمین‌شناسی`;
+      catalogGridContainer.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'catalog-card-item';
+        div.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+            <strong style="color: #60a5fa; font-size: 0.85rem;">${item.name_fa}</strong>
+            <span style="font-size: 0.7rem; background: #1e293b; padding: 0.15rem 0.4rem; border-radius: 4px; color: #94a3b8;">${item.category_fa}</span>
+          </div>
+          <div style="font-size: 0.74rem; color: #94a3b8; font-family: var(--font-mono); margin-bottom: 0.35rem; direction: ltr; text-align: right;">${item.formula}</div>
+          <div style="font-size: 0.73rem; color: #cbd5e1; margin-bottom: 0.3rem;">
+            سختی: <strong style="color: #fbbf24;">${item.mohs_display}</strong> • چگالی: <strong>${item.sg_display}</strong>
+          </div>
+          <div style="font-size: 0.72rem; color: #64748b; line-height: 1.4;">
+            ${item.locality ? item.locality.substring(0, 75) + '...' : ''}
+          </div>
+        `;
+        div.addEventListener('click', () => {
+          catalogModal.style.display = 'none';
+          createSyntheticSpecimenImage(item, (dataUrl) => {
+            currentImageSrc = dataUrl;
+            imagePreview.src = dataUrl;
+            previewWrapper.style.display = 'block';
+            analyzeImage(dataUrl, item.id);
+          });
+        });
+        catalogGridContainer.appendChild(div);
+      });
+    }
+
+    // Synthetic Canvas Generator for Verified Test Specimens
+    function createSyntheticSpecimenImage(mineral, callback) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 300;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+
+      // Base gradient from swatch colors
+      const grad = ctx.createLinearGradient(0, 0, 300, 300);
+      const swatches = mineral.color_swatches || ['#1e293b', '#334155'];
+      grad.addColorStop(0, swatches[0] || '#1e3a8a');
+      grad.addColorStop(0.5, swatches[1] || swatches[0] || '#2563eb');
+      grad.addColorStop(1, swatches[2] || swatches[0] || '#0f172a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 300, 300);
+
+      // Add mineral-specific morphological texture
+      if (mineral.id === 'lapis-lazuli') {
+        // Golden pyrite flecks
+        ctx.fillStyle = '#eab308';
+        for (let i = 0; i < 45; i++) {
+          const x = 30 + Math.random() * 240;
+          const y = 30 + Math.random() * 240;
+          ctx.fillRect(x, y, 3 + Math.random() * 3, 3 + Math.random() * 3);
+        }
+        // White calcite veining
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(20, 100);
+        ctx.bezierCurveTo(90, 70, 180, 140, 280, 110);
+        ctx.stroke();
+      } else if (mineral.id === 'emerald') {
+        // Hexagonal prism lines & garden inclusions
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(60, 60, 180, 180);
+      } else if (mineral.id === 'pyrite' || mineral.id === 'native-gold') {
+        // Metallic crystalline facets
+        ctx.fillStyle = '#facc15';
+        for (let i = 0; i < 60; i++) {
+          ctx.fillRect(20 + Math.random() * 260, 20 + Math.random() * 260, 6, 6);
+        }
+      }
+
+      callback(canvas.toDataURL('image/jpeg', 0.9));
+    }
+
+    // Helper math & formatting functions
+    function hexToRgb(hex) {
+      const clean = hex.replace('#', '');
+      const num = parseInt(clean, 16);
+      return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(x => {
+        const h = x.toString(16);
+        return h.length === 1 ? '0' + h : h;
+      }).join('');
+    }
+
+    function getHueNameFa(hue) {
+      const map = {
+        blue: 'آبی',
+        green: 'سبز',
+        yellow_gold: 'زرد',
+        red_pink: 'سرخ/صورتی',
+        black_dark: 'تیره',
+        white_light: 'روشن'
+      };
+      return map[hue] || 'رنگ‌های مختلط';
+    }
+  </script>
+
+</body>
+</html>
